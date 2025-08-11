@@ -1,0 +1,11 @@
+.dot-leader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.dot-leader .dots {
+  flex: 1 1 auto;
+  border-bottom: 1px dotted currentColor;
+  height: 0;
+  transform: translateY(-0.25em);
+}
