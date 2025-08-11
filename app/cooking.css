@@ -1,0 +1,135 @@
+/* Cooking page styles */
+.cooking-page {
+	background: #0a174e;
+	min-height: 100vh;
+	color: #fff;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-end;
+	font-family: Inter, sans-serif;
+}
+
+.cooking-content {
+	width: 100vw;
+	max-width: 430px;
+	min-height: 90vh;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
+	padding: 24px 0 80px 0;
+	box-sizing: border-box;
+}
+
+.recipe-title {
+	font-size: 2rem;
+	font-weight: 700;
+	text-align: left;
+	margin-bottom: 24px;
+	padding-left: 8px;
+}
+
+
+.lyric-instructions {
+	flex: 1;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 0 8px;
+	margin-bottom: 32px;
+	max-width: 98vw;
+}
+
+.lyric-step {
+	font-size: 1.2rem;
+	text-align: left;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: all 0.2s;
+	padding: 8px 0;
+	max-width: 100%;
+	word-break: keep-all;
+	white-space: pre-line;
+}
+.lyric-step.selected {
+	font-size: 1.5rem;
+	font-weight: 700;
+	opacity: 1;
+	background: rgba(255,255,255,0.08);
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+	text-align: left;
+	max-width: 100%;
+	word-break: keep-all;
+	white-space: pre-line;
+}
+
+.lyric-step {
+	font-size: 1.2rem;
+	text-align: left;
+	cursor: pointer;
+	opacity: 0.7;
+	transition: all 0.2s;
+	padding: 8px 0;
+}
+.lyric-step.selected {
+	font-size: 1.5rem;
+	font-weight: 700;
+	opacity: 1;
+	background: rgba(255,255,255,0.08);
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+	text-align: left;
+}
+
+.controls {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0 8px;
+	margin-bottom: 48px;
+}
+.control-btn {
+	/* ...existing code... */
+	margin: 0;
+}
+.ask-btn {
+	/* ...existing code... */
+	margin: 0 16px;
+}
+
+
+.control-btn {
+	background: rgba(255,255,255,0.8);
+	color: #0a174e;
+	border: none;
+	border-radius: 50%;
+	width: 56px;
+	height: 56px;
+	font-size: 2rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.control-btn:active {
+	background: rgba(224,230,246,0.8);
+}
+.ask-btn {
+	background: rgba(255,255,255,0.9);
+	color: #0a174e;
+	font-size: 1.1rem;
+	font-weight: bold;
+	width: auto;
+	height: 56px;
+	border-radius: 28px;
+	padding: 0 18px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}

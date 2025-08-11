@@ -6,23 +6,33 @@ const FloatingNav: React.FC = () => (
     <NavLink
       to="/recipes"
       className={({ isActive }) =>
-        `flex-1 text-center py-2 mx-1 rounded-full transition ${
-          isActive
-            ? "bg-gray-200 dark:bg-gray-700 text-blue-500"
-            : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        `flex-1 text-center py-2 mx-1 rounded-full transition ${isActive
+          ? "bg-gray-200 dark:bg-gray-700 text-blue-500"
+          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
         }`
       }
     >
-      Recipe
+
+      Recipes
+    </NavLink>
+    <NavLink
+      to="/cooking"
+      className={({ isActive }) =>
+        `flex-1 text-center py-2 mx-1 rounded-full transition ${isActive
+          ? "bg-gray-200 dark:bg-gray-700 text-blue-500"
+          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        }`
+      }
+    >
+      Cooking
     </NavLink>
     <NavLink
       to="/"
       end
       className={({ isActive }) =>
-        `flex-1 text-center py-2 mx-1 rounded-full transition ${
-          isActive
-            ? "bg-gray-200 dark:bg-gray-700 text-blue-500"
-            : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        `flex-1 text-center py-2 mx-1 rounded-full transition ${isActive
+          ? "bg-gray-200 dark:bg-gray-700 text-blue-500"
+          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
         }`
       }
     >
@@ -31,10 +41,9 @@ const FloatingNav: React.FC = () => (
     <NavLink
       to="/inventory"
       className={({ isActive }) =>
-        `flex-1 text-center py-2 mx-1 rounded-full transition ${
-          isActive
-            ? "bg-gray-200 dark:bg-gray-700 text-blue-500"
-            : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        `flex-1 text-center py-2 mx-1 rounded-full transition ${isActive
+          ? "bg-gray-200 dark:bg-gray-700 text-blue-500"
+          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
         }`
       }
     >
