@@ -1,40 +1,40 @@
 // CSS Classes Organization
 export const styles = {
     // Layout & Container Classes
-    pageContainer: "min-h-screen bg-cover bg-center bg-no-repeat p-4",
-    mainContainer: "max-w-4xl mx-auto pb-20",
-    header: "text-center mb-8",
-    headerTitle: "text-3xl font-bold text-white mb-2",
-    headerSubtitle: "text-lg text-white",
+    pageContainer: "min-h-screen bg-cover bg-center bg-no-repeat p-6",
+    mainContainer: "max-w-5xl mx-auto pb-24",
+    header: "text-center mb-12",
+    headerTitle: "text-4xl font-bold text-white mb-3 tracking-tight",
+    headerSubtitle: "text-xl text-white/90 font-medium",
 
     // Fridge Container Classes
-    fridgeContainer: "w-1/2 max-w-sm mx-auto bg-gray-200/20 dark:bg-gray-700/20 rounded-lg shadow-xl border-2 border-gray-400/20 dark:border-gray-600/20 overflow-hidden backdrop-blur-sm",
+    fridgeContainer: "w-1/2 max-w-md mx-auto bg-white/10 dark:bg-gray-800/10 rounded-2xl shadow-2xl border border-white/20 dark:border-gray-600/20 overflow-hidden backdrop-blur-md",
     freezerSection: "bg-white/20 dark:bg-gray-800/20 border-b-2 border-gray-300/20 dark:border-gray-600/20 h-1/2 backdrop-blur-sm",
-    freezerHandle: "flex justify-center pt-2 pb-1",
-    freezerHandleBar: "w-16 h-2 bg-gray-400/20 dark:bg-gray-600/20 rounded-full",
-    freezerInterior: "p-3 bg-gradient-to-b from-blue-50/20 to-blue-100/20 dark:from-blue-900/20 dark:to-blue-800/20 h-full cursor-pointer transition-all duration-300 hover:from-blue-100/40 hover:to-blue-200/40 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 hover:shadow-md border-2 border-transparent hover:border-blue-300/20 dark:hover:border-blue-500/20 rounded-lg m-1 backdrop-blur-sm",
-    freezerTitle: "text-center mb-2",
-    freezerTitleText: "text-sm font-semibold text-blue-800 dark:text-blue-200",
+    freezerHandle: "hidden",
+    freezerHandleBar: "hidden",
+    freezerInterior: "p-4 pt-6 bg-gradient-to-b from-blue-50/50 to-blue-100/50 dark:from-blue-900/50 dark:to-blue-800/50 h-full cursor-pointer transition-all duration-300 hover:from-blue-100/70 hover:to-blue-200/70 dark:hover:from-blue-800/70 dark:hover:to-blue-700/70 hover:shadow-lg border border-transparent hover:border-blue-300/40 dark:hover:border-blue-500/40 rounded-xl m-2 mt-0 backdrop-blur-md",
+    freezerTitle: "text-center mb-3",
+    freezerTitleText: "text-sm font-bold text-blue-800 dark:text-blue-200 tracking-wide uppercase",
 
     // Refrigerator Section Classes
     refrigeratorSection: "bg-white/20 dark:bg-gray-800/20 h-1/2 backdrop-blur-sm",
-    refrigeratorHandle: "flex justify-center pt-2 pb-1",
-    refrigeratorHandleBar: "w-20 h-2 bg-gray-400/20 dark:bg-gray-600/20 rounded-full",
-    refrigeratorInterior: "p-3 bg-gradient-to-b from-emerald-50/20 to-emerald-100/20 dark:from-emerald-900/20 dark:to-emerald-800/20 h-full cursor-pointer transition-all duration-300 hover:from-emerald-100/40 hover:to-emerald-200/40 dark:hover:from-emerald-800/30 dark:hover:from-emerald-700/30 hover:shadow-md border-2 border-transparent hover:border-emerald-300/20 dark:hover:border-emerald-500/20 rounded-lg m-1 backdrop-blur-sm",
-    refrigeratorTitle: "text-center mb-2",
-    refrigeratorTitleText: "text-sm font-semibold text-gray-700 dark:text-gray-300",
+    refrigeratorHandle: "hidden",
+    refrigeratorHandleBar: "hidden",
+    refrigeratorInterior: "p-4 pt-6 bg-gradient-to-b from-emerald-50/50 to-emerald-100/50 dark:from-emerald-900/50 dark:to-emerald-800/50 h-full cursor-pointer transition-all duration-300 hover:from-emerald-100/70 hover:to-emerald-200/70 dark:hover:from-emerald-800/70 dark:hover:from-emerald-700/70 hover:shadow-lg border border-transparent hover:border-emerald-300/40 dark:hover:border-emerald-500/40 rounded-xl m-2 mt-0 backdrop-blur-md",
+    refrigeratorTitle: "text-center mb-3",
+    refrigeratorTitleText: "text-sm font-bold text-emerald-700 dark:text-emerald-300 tracking-wide uppercase",
 
     // Fridge Base Classes
     fridgeBase: "bg-gray-300 dark:bg-gray-600 h-3",
 
     // Add Item Button Classes
-    addItemContainer: "flex justify-end mt-4",
-    addItemButton: "w-12 h-12 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer",
+    addItemContainer: "flex justify-center mt-8",
+    addItemButton: "w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 cursor-pointer border border-white/20",
     addItemIcon: "w-6 h-6 text-white",
 
     // Modal Overlay Classes
-    modalOverlay: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm",
-    modalContent: "w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-xl border-2 shadow-2xl backdrop-blur-md",
+    modalOverlay: "fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-md",
+    modalContent: "w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/20 shadow-2xl backdrop-blur-lg",
     modalPadding: "p-6",
 
     // Near Expiring Modal Classes
@@ -106,7 +106,7 @@ export const styles = {
     addItemGrid: "grid grid-cols-2 md:grid-cols-3 gap-4",
 
     // Add Item Card Classes
-    addItemCard: "p-4 bg-gray-50/20 dark:bg-gray-700/20 rounded-lg border-2 border-gray-200/20 dark:border-gray-600/20 hover:border-blue-300/20 dark:hover:border-blue-500/20 transition-all duration-200 backdrop-blur-sm",
+    addItemCard: "p-5 bg-white/10 dark:bg-gray-800/10 rounded-xl border border-white/20 dark:border-gray-600/20 hover:border-blue-300/40 dark:hover:border-blue-500/40 transition-all duration-300 backdrop-blur-md hover:shadow-lg hover:scale-[1.02]",
     addItemCardContent: "text-center mb-3",
     addItemCardImage: "mb-2",
     addItemCardName: "font-semibold text-gray-800 dark:text-white text-sm",
@@ -114,12 +114,12 @@ export const styles = {
     addItemCardRow: "flex items-center justify-between text-xs",
     addItemCardLabel: "text-gray-600 dark:text-gray-300",
     addItemCardValue: "font-medium text-gray-800 dark:text-white",
-    addItemCardButton: "w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors duration-200 hover:scale-105",
+    addItemCardButton: "w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg",
 
     // Dishes Section Classes
-    dishesContainer: "mt-8",
-    dishesHeader: "flex items-center justify-between mb-4",
-    dishesTitle: "text-xl font-semibold text-white",
+    dishesContainer: "mt-12",
+    dishesHeader: "flex items-center justify-between mb-6",
+    dishesTitle: "text-2xl font-bold text-white tracking-tight",
     clearAllDishesButton: "px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg font-medium transition-colors duration-200",
     dishesEmptyState: "text-center py-8 bg-gradient-to-r from-yellow-50/20 to-orange-50/20 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200/20 dark:border-yellow-600/20 backdrop-blur-sm",
     dishesEmptyIcon: "w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600",
@@ -128,7 +128,7 @@ export const styles = {
     dishesList: "space-y-4",
 
     // Dish Card Classes
-    dishCard: "p-4 bg-gradient-to-r from-yellow-50/20 to-orange-50/20 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200/20 dark:border-yellow-600/20 shadow-sm backdrop-blur-sm",
+    dishCard: "p-6 bg-gradient-to-r from-yellow-50/30 to-orange-50/30 dark:from-yellow-900/30 dark:to-orange-900/30 rounded-2xl border border-yellow-300/30 dark:border-yellow-500/30 shadow-lg backdrop-blur-md hover:shadow-xl transition-all duration-300",
     dishHeader: "flex items-center justify-between mb-3",
     dishInfo: "flex items-center space-x-3",
     dishIcon: "w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center",
@@ -169,6 +169,7 @@ export const styles = {
     marginBottom3: "mb-3",
     marginBottom4: "mb-4",
     marginBottom6: "mb-6",
+    marginBottom8: "mb-8",
     marginTop1: "mt-1",
     marginLeft2: "ml-2",
     spaceY1: "space-y-1",
