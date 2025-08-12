@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { styles } from "./recipes.styles";
 import "./recipes.css";
 import { fetchMultipleRecipes, type RecipeCardData } from "../services/recipeApi";
+import { useInventory } from "../services/inventoryContext";
 
 // 扩展API类型以适配recipes页面需求
 type Recipe = RecipeCardData & {
@@ -89,6 +90,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Recipes() {
   const navigate = useNavigate();
+  const { getCurrentPlateIngredients } = useInventory();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -250,6 +252,22 @@ export default function Recipes() {
     navigate(`/recipes/${encodeURIComponent(recipe.title)}`);
   };
 
+  const handleGenerateRecipe = () => {
+    try {
+      const plateIngredients = getCurrentPlateIngredients();
+      const ingredientsParam = plateIngredients.length > 0 ? plateIngredients.join(',') : 'N.A.';
+      
+      console.log('[Recipes] Generating recipe with ingredients:', plateIngredients);
+      
+      // Navigate to RecipeDetail with the actual ingredients from the plate
+      navigate(`/recipes/N.A.?prefs=N.A.&dishes=${encodeURIComponent(ingredientsParam)}`);
+    } catch (error) {
+      console.error('[Recipes] Error generating recipe:', error);
+      // Fallback to default navigation
+      navigate('/recipes/N.A.?prefs=N.A.&dishes=N.A.');
+    }
+  };
+
   const handleRetry = () => {
     // Clear cache and reload
     if (typeof window !== "undefined") {
@@ -304,6 +322,15 @@ export default function Recipes() {
               className={styles.searchInput}
             />
           </div>
+          
+          {/* Generate Recipe Button */}
+          <button
+            onClick={handleGenerateRecipe}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+            title={getCurrentPlateIngredients().length > 0 ? `Generate recipe using: ${getCurrentPlateIngredients().join(', ')}` : 'No ingredients on plate'}
+          >
+            Generate Recipe {getCurrentPlateIngredients().length > 0 && `(${getCurrentPlateIngredients().length} ingredients)`}
+          </button>
         </div>
 
         {/* Filter section - inline layout */}

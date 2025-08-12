@@ -1,29 +1,32 @@
 import type { Route } from "./+types/inventory";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { styles } from "./inventory.styles";
+import { InventoryProvider, useInventory } from "../services/inventoryContext";
 
 export function meta({ }: Route.MetaArgs) {
     return [{ title: "Inventory" }];
 }
 
-export default function Inventory() {
+function InventoryContent() {
+    const { dishes, setDishes, inventoryItems, setInventoryItems } = useInventory();
     const [expandedNearExpiring, setExpandedNearExpiring] = useState(false);
     const [expandedFreshItems, setExpandedFreshItems] = useState(false);
     const [expandedAddItem, setExpandedAddItem] = useState(false);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
-    const [dishes, setDishes] = useState<Array<{ id: string, items: string[], createdAt: Date }>>([]);
 
-    // Add inventory state with count property
-    const [inventoryItems, setInventoryItems] = useState<Array<{
-        name: string;
-        category: string;
-        expiresIn: string;
-        status: string;
-        count: number;
-    }>>([
-        { name: "Chicken Tender Meal", category: "Meat", expiresIn: "1 day", status: "near-expiring", count: 1 }
-    ]);
+    // Remove the local state for inventoryItems since it's now in context
+    // const [inventoryItems, setInventoryItems] = useState<Array<{...}>>([...]);
+
+    // Initialize default inventory items if none exist
+    useEffect(() => {
+        if (inventoryItems.length === 0) {
+            const defaultItems = [
+                { name: "Chicken Tender Meal", category: "Meat", expiresIn: "1 day", status: "near-expiring", count: 1 }
+            ];
+            setInventoryItems(defaultItems);
+        }
+    }, [inventoryItems.length, setInventoryItems]);
 
     const handleNearExpiringClick = () => {
         setExpandedNearExpiring(!expandedNearExpiring);
@@ -119,25 +122,81 @@ export default function Inventory() {
 
     const getCategoryForItem = (itemName: string) => {
         const categoryMap: { [key: string]: string } = {
-            "Buns": "Bakery",
-            "Lettuce": "Vegetables",
-            "Chicken": "Meat",
-            "Sesame": "Pantry"
+            // Bakery
+            "Buns": "Bakery", "Bread": "Bakery",
+            
+            // Vegetables
+            "Lettuce": "Vegetables", "Carrots": "Vegetables", "Tomatoes": "Vegetables", 
+            "Onions": "Vegetables", "Potatoes": "Vegetables", "Cucumber": "Vegetables",
+            "Bell Peppers": "Vegetables", "Spinach": "Vegetables", "Broccoli": "Vegetables",
+            "Green Beans": "Vegetables", "Peas": "Vegetables", "Mushrooms": "Vegetables",
+            "Garlic": "Vegetables",
+            
+            // Fruits
+            "Apples": "Fruits", "Bananas": "Fruits", "Oranges": "Fruits", "Grapes": "Fruits",
+            
+            // Meat & Seafood
+            "Chicken": "Meat", "Bacon": "Meat", "Ham": "Meat", "Turkey": "Meat",
+            "Ground Beef": "Meat", "Pork Chops": "Meat", "Fish": "Seafood", "Shrimp": "Seafood",
+            
+            // Dairy
+            "Milk": "Dairy", "Eggs": "Dairy", "Cheese": "Dairy", "Butter": "Dairy", "Yogurt": "Dairy",
+            
+            // Condiments
+            "Mayo": "Condiments", "Ketchup": "Condiments", "Mustard": "Condiments",
+            "Pickles": "Condiments", "Jelly": "Condiments", "Peanut Butter": "Condiments", "Honey": "Condiments",
+            
+            // Pantry
+            "Sesame": "Pantry", "Rice": "Pantry", "Pasta": "Pantry", "Beans": "Pantry", "Corn": "Pantry"
         };
         return categoryMap[itemName] || "Other";
     };
 
     const getDefaultExpiry = (itemName: string) => {
         const expiryMap: { [key: string]: string } = {
-            "Buns": "1 week",
-            "Lettuce": "1 week",
-            "Chicken": "5 days",
-            "Sesame": "6 months"
+            // Bakery - shorter shelf life
+            "Buns": "1 week", "Bread": "1 week",
+            
+            // Vegetables - varies by type
+            "Lettuce": "1 week", "Carrots": "3 weeks", "Tomatoes": "1 week", 
+            "Onions": "2 months", "Potatoes": "2 months", "Cucumber": "1 week",
+            "Bell Peppers": "1 week", "Spinach": "1 week", "Broccoli": "1 week",
+            "Green Beans": "1 week", "Peas": "1 week", "Mushrooms": "1 week",
+            "Garlic": "3 months",
+            
+            // Fruits - varies by type
+            "Apples": "3 weeks", "Bananas": "1 week", "Oranges": "2 weeks", "Grapes": "1 week",
+            
+            // Meat & Seafood - shorter shelf life
+            "Chicken": "5 days", "Bacon": "1 week", "Ham": "1 week", "Turkey": "1 week",
+            "Ground Beef": "3 days", "Pork Chops": "5 days", "Fish": "3 days", "Shrimp": "3 days",
+            
+            // Dairy - varies by type
+            "Milk": "1 week", "Eggs": "3 weeks", "Cheese": "3 weeks", "Butter": "1 month", "Yogurt": "2 weeks",
+            
+            // Condiments - longer shelf life
+            "Mayo": "2 months", "Ketchup": "6 months", "Mustard": "1 year",
+            "Pickles": "1 year", "Jelly": "1 year", "Peanut Butter": "6 months", "Honey": "2 years",
+            
+            // Pantry - longest shelf life
+            "Sesame": "6 months", "Rice": "1 year", "Pasta": "1 year", "Beans": "1 year", "Corn": "1 year"
         };
         return expiryMap[itemName] || "1 week";
     };
 
-    const defaultItems = ["Buns", "Lettuce", "Chicken", "Sesame"];
+    const defaultItems = [
+        "Buns", "Lettuce", "Chicken", "Sesame",
+        "Milk", "Eggs", "Cheese", "Butter",
+        "Yogurt", "Bacon", "Ham", "Turkey",
+        "Carrots", "Tomatoes", "Onions", "Potatoes",
+        "Apples", "Bananas", "Oranges", "Grapes",
+        "Bread", "Mayo", "Ketchup", "Mustard",
+        "Pickles", "Jelly", "Peanut Butter", "Honey",
+        "Cucumber", "Bell Peppers", "Spinach", "Broccoli",
+        "Ground Beef", "Pork Chops", "Fish", "Shrimp",
+        "Rice", "Pasta", "Beans", "Corn",
+        "Green Beans", "Peas", "Mushrooms", "Garlic"
+    ];
 
     // Get current counts for display
     const nearExpiringCount = inventoryItems
@@ -546,9 +605,6 @@ export default function Inventory() {
 
                     {dishes.length === 0 ? (
                         <div className={styles.dishesEmptyState}>
-                            <svg className={`${styles.iconHuge} ${styles.imageCentered} ${styles.marginBottom4} ${styles.textGray}`} fill={styles.svgFill} stroke={styles.svgStroke} viewBox={styles.svgViewBox}>
-                                <path strokeLinecap={styles.svgStrokeLinecap} strokeLinejoin={styles.svgStrokeLinejoin} strokeWidth={styles.svgStrokeWidth1} d={styles.svgPathShoppingCart} />
-                            </svg>
                             <p className={`${styles.textLarge} ${styles.textGray800}`}>No dishes yet</p>
                             <p className={`${styles.textSmall} ${styles.textGray}`}>Select items and create your first dish</p>
                         </div>
@@ -561,22 +617,21 @@ export default function Inventory() {
                                 >
                                     <div className={`${styles.flexBetween} ${styles.marginBottom3}`}>
                                         <div className={styles.dishInfo}>
-                                            <div className={styles.dishIcon}>
-                                                <svg className={`${styles.iconSmall} ${styles.textWhite}`} fill={styles.svgFill} stroke={styles.svgStroke} viewBox={styles.svgViewBox}>
-                                                    <path strokeLinecap={styles.svgStrokeLinecap} strokeLinejoin={styles.svgStrokeLinejoin} strokeWidth={styles.svgStrokeWidth2} d={styles.svgPathShoppingCart} />
-                                                </svg>
-                                            </div>
                                             <span className={styles.dishTitle}>
                                                 Dish #{dishIndex + 1} • {dish.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
                                         <div className={styles.dishActions}>
-                                            <a
-                                                href="/recipes"
+                                            <button
+                                                onClick={() => {
+                                                    const plateIngredients = dishes.flatMap(dish => dish.items);
+                                                    const ingredientsParam = plateIngredients.length > 0 ? plateIngredients.join(',') : 'N.A.';
+                                                    window.location.href = `/recipes/N.A.?prefs=N.A.&dishes=${encodeURIComponent(ingredientsParam)}`;
+                                                }}
                                                 className={styles.generateRecipeButton}
                                             >
                                                 Generate Recipe
-                                            </a>
+                                            </button>
                                             <button
                                                 onClick={() => handleRemoveDish(dish.id)}
                                                 className={styles.removeDishButton}
@@ -614,4 +669,8 @@ export default function Inventory() {
             </div>
         </div>
     );
+}
+
+export default function Inventory() {
+    return <InventoryContent />;
 }
