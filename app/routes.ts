@@ -8,5 +8,4 @@ export default [
   route("cooking", "routes/cooking.tsx"),
   route("settings", "routes/settings.tsx"),
   route("scan", "routes/scan.tsx"),
-  route("recipes/:dishName", "routes/RecipeDetail.tsx"),
 ] satisfies RouteConfig;

@@ -11,7 +11,7 @@ export const recipes: Recipe[] = [
     title: "Classic Cake",
     instructions: [
       "Preheat the oven to 350°F (175°C).",
-      "Mix flour and sugar in a bowl.",
+      "Mix flour and sugar in a boswl.",
       "Add eggs and whisk until smooth.",
       "Pour batter into a greased pan.",
       "Bake for 30 minutes.",
