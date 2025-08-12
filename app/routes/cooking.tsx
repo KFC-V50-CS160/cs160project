@@ -103,17 +103,24 @@ export default function Cooking() {
           <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
           <h1 className="recipe-title" style={{ margin: '0', textAlign: 'left' }}>{recipeTitle}</h1>
         </div>
-        <div className="main-align-container" style={{ marginTop: '140px' }}>
+  <div className="main-align-container">
           <div className="lyric-instructions-wrapper" style={{ marginTop: '0', textAlign: 'left' }}>
             <div className="lyric-instructions-cutout lyric-instructions-cutout-top" />
             <div className="lyric-instructions" ref={containerRef}>
               {visibleSteps.map((step, idx) => {
-                // Map idx to actual index in instructions
-                const actualIdx = start + idx;
+                const actualIdx = start + idx; // actual index in full instructions
+                let distClass: string;
+                if (actualIdx < currentStep) {
+                  distClass = 'dist-4'; // past steps
+                } else if (actualIdx === currentStep) {
+                  distClass = 'dist-0'; // selected
+                } else {
+                  distClass = 'dist-2'; // all future steps uniform fade
+                }
                 return (
                   <div
                     key={actualIdx}
-                    className={`lyric-step${actualIdx === currentStep ? " selected" : ""}`}
+                    className={`lyric-step ${distClass}${actualIdx === currentStep ? " selected" : ""}`}
                     onClick={() => setCurrentStep(actualIdx)}
                   >
                     {step}
