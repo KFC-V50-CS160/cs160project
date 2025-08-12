@@ -185,18 +185,82 @@ function InventoryContent() {
     };
 
     const defaultItems = [
-        "Buns", "Lettuce", "Chicken", "Sesame",
-        "Milk", "Eggs", "Cheese", "Butter",
-        "Yogurt", "Bacon", "Ham", "Turkey",
-        "Carrots", "Tomatoes", "Onions", "Potatoes",
+        // Bakery
+        "Buns", "Bread",
+        
+        // Vegetables
+        "Lettuce", "Carrots", "Tomatoes", "Onions", "Potatoes", "Cucumber",
+        "Bell Peppers", "Spinach", "Broccoli", "Green Beans", "Peas", "Mushrooms", "Garlic",
+        
+        // Fruits
         "Apples", "Bananas", "Oranges", "Grapes",
-        "Bread", "Mayo", "Ketchup", "Mustard",
-        "Pickles", "Jelly", "Peanut Butter", "Honey",
-        "Cucumber", "Bell Peppers", "Spinach", "Broccoli",
-        "Ground Beef", "Pork Chops", "Fish", "Shrimp",
-        "Rice", "Pasta", "Beans", "Corn",
-        "Green Beans", "Peas", "Mushrooms", "Garlic"
+        
+        // Meat & Seafood
+        "Chicken", "Bacon", "Ham", "Turkey", "Ground Beef", "Pork Chops", "Fish", "Shrimp",
+        
+        // Dairy
+        "Milk", "Eggs", "Cheese", "Butter", "Yogurt",
+        
+        // Condiments
+        "Mayo", "Ketchup", "Mustard", "Pickles", "Jelly", "Peanut Butter", "Honey",
+        
+        // Pantry
+        "Sesame", "Rice", "Pasta", "Beans", "Corn"
     ];
+
+    // Group items by category
+    const itemsByCategory = {
+        "Bakery": defaultItems.filter(item => getCategoryForItem(item) === "Bakery"),
+        "Vegetables": defaultItems.filter(item => getCategoryForItem(item) === "Vegetables"),
+        "Fruits": defaultItems.filter(item => getCategoryForItem(item) === "Fruits"),
+        "Meat": defaultItems.filter(item => getCategoryForItem(item) === "Meat"),
+        "Seafood": defaultItems.filter(item => getCategoryForItem(item) === "Seafood"),
+        "Dairy": defaultItems.filter(item => getCategoryForItem(item) === "Dairy"),
+        "Condiments": defaultItems.filter(item => getCategoryForItem(item) === "Condiments"),
+        "Pantry": defaultItems.filter(item => getCategoryForItem(item) === "Pantry")
+    };
+
+    // Sorting and filtering state
+    const [sortBy, setSortBy] = useState<string>("category");
+    const [filterCategory, setFilterCategory] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState<string>("");
+
+    // Sorting and filtering functions
+    const sortItems = (items: string[]) => {
+        switch (sortBy) {
+            case "name":
+                return [...items].sort((a, b) => a.localeCompare(b));
+            case "category":
+                return [...items].sort((a, b) => getCategoryForItem(a).localeCompare(getCategoryForItem(b)));
+            case "expiry":
+                return [...items].sort((a, b) => {
+                    const expiryA = getDefaultExpiry(a);
+                    const expiryB = getDefaultExpiry(b);
+                    return expiryA.localeCompare(expiryB);
+                });
+            default:
+                return items;
+        }
+    };
+
+    const filterItems = (items: string[]) => {
+        let filtered = items;
+        
+        // Filter by category
+        if (filterCategory !== "all") {
+            filtered = filtered.filter(item => getCategoryForItem(item) === filterCategory);
+        }
+        
+        // Filter by search query
+        if (searchQuery.trim()) {
+            filtered = filtered.filter(item => 
+                item.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                getCategoryForItem(item).toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        
+        return filtered;
+    };
 
     // Get current counts for display
     const nearExpiringCount = inventoryItems
@@ -207,14 +271,19 @@ function InventoryContent() {
         .reduce((total, item) => total + item.count, 0);
 
     return (
-        <div className={styles.pageContainer}>
+        <div className={styles.pageContainer} style={{ 
+          backgroundImage: 'url("/galixy image.webp")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}>
             <div className={styles.mainContainer}>
 
                 <div className={styles.header}>
                     <h1 className={styles.headerTitle}>
                         Magic Fridge
                     </h1>
-                    <p className={styles.textGray}>
+                    <p className="text-white">
                         Manage your food inventory
                     </p>
                 </div>
@@ -544,44 +613,139 @@ function InventoryContent() {
                                 </div>
 
                                 <div className={styles.marginBottom4}>
-                                    <p className={`${styles.textGray} ${styles.textCenter}`}>Select items to add to your fridge:</p>
+                                    <p className={`text-white ${styles.textCenter}`}>Select items to add to your fridge:</p>
                                 </div>
 
-                                <div className={styles.gridCols2Md3}>
-                                    {defaultItems.map((item) => {
-                                        const existingItem = inventoryItems.find(invItem => invItem.name === item);
-                                        const currentCount = existingItem ? existingItem.count : 0;
+                                {/* Search and Filter Controls */}
+                                <div className={`flex flex-col sm:flex-row gap-3 ${styles.marginBottom4}`}>
+                                    <div className="flex-1">
+                                        <input
+                                            type="text"
+                                            placeholder="Search..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:border-white/50"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={filterCategory}
+                                            onChange={(e) => setFilterCategory(e.target.value)}
+                                            className="px-2 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:border-white/50 [&>option]:text-black [&>option]:bg-white text-sm min-w-0"
+                                        >
+                                            <option value="all">All</option>
+                                            <option value="Bakery">Bakery</option>
+                                            <option value="Vegetables">Veg</option>
+                                            <option value="Fruits">Fruits</option>
+                                            <option value="Meat">Meat</option>
+                                            <option value="Seafood">Fish</option>
+                                            <option value="Dairy">Dairy</option>
+                                            <option value="Condiments">Cond</option>
+                                            <option value="Pantry">Pantry</option>
+                                        </select>
+                                        <select
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value)}
+                                            className="px-2 py-2 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:border-white/50 [&>option]:text-black [&>option]:bg-white text-sm min-w-0"
+                                        >
+                                            <option value="name">Name</option>
+                                            <option value="category">Category</option>
+                                        </select>
+                                    </div>
+                                </div>
 
+                                {/* Items organized by category or sorted by name */}
+                                {sortBy === "name" ? (
+                                    // Show all items sorted by name without category grouping
+                                    <div className={`${styles.gridCols2Md3} ${styles.gap4}`}>
+                                        {sortItems(filterItems(defaultItems)).map((item) => {
+                                            const existingItem = inventoryItems.find(invItem => invItem.name === item);
+                                            const currentCount = existingItem ? existingItem.count : 0;
+
+                                            return (
+                                                <div key={item} className={`${styles.addItemCard} ${styles.marginBottom4}`}>
+                                                    <div className={`${styles.textCenter} ${styles.marginBottom3}`}>
+                                                        <div className={styles.marginBottom2}>
+                                                            <img src="/kfc.jpg" alt={item} className={`${styles.iconExtraLarge} ${styles.imageCentered} ${styles.imageRounded}`} />
+                                                        </div>
+                                                        <h4 className={`${styles.itemName} ${styles.textSmall}`}>{item}</h4>
+                                                    </div>
+
+                                                    <div className={`${styles.spaceY2} ${styles.marginBottom3}`}>
+                                                        <div className={`${styles.flexBetween} ${styles.textSmall}`}>
+                                                            <span className={styles.itemDetailLabel}>Current:</span>
+                                                            <span className={styles.itemDetailValue}>{currentCount}</span>
+                                                        </div>
+                                                        <div className={`${styles.flexBetween} ${styles.textSmall}`}>
+                                                            <span className={styles.itemDetailLabel}>Category:</span>
+                                                            <span className={styles.itemDetailValue}>{getCategoryForItem(item)}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleAddToFridge(item)}
+                                                        className={styles.addItemCardButton}
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    // Show items organized by category (with category sorting if sortBy === "category")
+                                    (sortBy === "category" 
+                                        ? Object.entries(itemsByCategory).sort(([a], [b]) => a.localeCompare(b))
+                                        : Object.entries(itemsByCategory)
+                                    ).map(([category, items]) => {
+                                        const filteredAndSortedItems = sortItems(filterItems(items));
+                                        
+                                        if (filteredAndSortedItems.length === 0) return null;
+                                        
                                         return (
-                                            <div key={item} className={styles.addItemCard}>
-                                                <div className={`${styles.textCenter} ${styles.marginBottom3}`}>
-                                                    <div className={styles.marginBottom2}>
-                                                        <img src="/kfc.jpg" alt={item} className={`${styles.iconExtraLarge} ${styles.imageCentered} ${styles.imageRounded}`} />
-                                                    </div>
-                                                    <h4 className={`${styles.itemName} ${styles.textSmall}`}>{item}</h4>
-                                                </div>
+                                            <div key={category} className={styles.marginBottom6}>
+                                                <h4 className={`text-white font-semibold text-lg mb-3 ${styles.marginBottom3}`}>
+                                                    {category} ({filteredAndSortedItems.length})
+                                                </h4>
+                                                <div className={`${styles.gridCols2Md3} ${styles.gap4}`}>
+                                                    {filteredAndSortedItems.map((item) => {
+                                                        const existingItem = inventoryItems.find(invItem => invItem.name === item);
+                                                        const currentCount = existingItem ? existingItem.count : 0;
 
-                                                <div className={`${styles.spaceY2} ${styles.marginBottom3}`}>
-                                                    <div className={`${styles.flexBetween} ${styles.textSmall}`}>
-                                                        <span className={styles.itemDetailLabel}>Current:</span>
-                                                        <span className={styles.itemDetailValue}>{currentCount}</span>
-                                                    </div>
-                                                    <div className={`${styles.flexBetween} ${styles.textSmall}`}>
-                                                        <span className={styles.itemDetailLabel}>Category:</span>
-                                                        <span className={styles.itemDetailValue}>{getCategoryForItem(item)}</span>
-                                                    </div>
-                                                </div>
+                                                        return (
+                                                            <div key={item} className={`${styles.addItemCard} ${styles.marginBottom4}`}>
+                                                                <div className={`${styles.textCenter} ${styles.marginBottom3}`}>
+                                                                    <div className={styles.marginBottom2}>
+                                                                        <img src="/kfc.jpg" alt={item} className={`${styles.iconExtraLarge} ${styles.imageCentered} ${styles.imageRounded}`} />
+                                                                    </div>
+                                                                    <h4 className={`${styles.itemName} ${styles.textSmall}`}>{item}</h4>
+                                                                </div>
 
-                                                <button
-                                                    onClick={() => handleAddToFridge(item)}
-                                                    className={styles.addItemCardButton}
-                                                >
-                                                    {currentCount > 0 ? `Add Another (${currentCount + 1})` : 'Add to Fridge'}
-                                                </button>
+                                                                <div className={`${styles.spaceY2} ${styles.marginBottom3}`}>
+                                                                    <div className={`${styles.flexBetween} ${styles.textSmall}`}>
+                                                                        <span className={styles.itemDetailLabel}>Current:</span>
+                                                                        <span className={styles.itemDetailValue}>{currentCount}</span>
+                                                                    </div>
+                                                                    <div className={`${styles.flexBetween} ${styles.textSmall}`}>
+                                                                        <span className={styles.itemDetailLabel}>Category:</span>
+                                                                        <span className={styles.itemDetailValue}>{getCategoryForItem(item)}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <button
+                                                                    onClick={() => handleAddToFridge(item)}
+                                                                    className={styles.addItemCardButton}
+                                                                >
+                                                                    Add
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         );
-                                    })}
-                                </div>
+                                    })
+                                )}
                             </div>
                         </div>
                     </div>

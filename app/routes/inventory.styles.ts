@@ -1,26 +1,26 @@
 // CSS Classes Organization
 export const styles = {
     // Layout & Container Classes
-    pageContainer: "min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4",
+    pageContainer: "min-h-screen bg-cover bg-center bg-no-repeat p-4",
     mainContainer: "max-w-4xl mx-auto pb-20",
     header: "text-center mb-8",
-    headerTitle: "text-3xl font-bold text-gray-800 dark:text-white mb-2",
-    headerSubtitle: "text-lg text-gray-600 dark:text-gray-400",
+    headerTitle: "text-3xl font-bold text-white mb-2",
+    headerSubtitle: "text-lg text-white",
 
     // Fridge Container Classes
-    fridgeContainer: "w-1/2 max-w-sm mx-auto bg-gray-200 dark:bg-gray-700 rounded-lg shadow-xl border-2 border-gray-400 dark:border-gray-600 overflow-hidden",
-    freezerSection: "bg-white dark:bg-gray-800 border-b-2 border-gray-300 dark:border-gray-600 h-1/2",
+    fridgeContainer: "w-1/2 max-w-sm mx-auto bg-gray-200/20 dark:bg-gray-700/20 rounded-lg shadow-xl border-2 border-gray-400/20 dark:border-gray-600/20 overflow-hidden backdrop-blur-sm",
+    freezerSection: "bg-white/20 dark:bg-gray-800/20 border-b-2 border-gray-300/20 dark:border-gray-600/20 h-1/2 backdrop-blur-sm",
     freezerHandle: "flex justify-center pt-2 pb-1",
-    freezerHandleBar: "w-16 h-2 bg-gray-400 dark:bg-gray-600 rounded-full",
-    freezerInterior: "p-3 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 h-full cursor-pointer transition-all duration-300 hover:bg-blue-100 dark:hover:bg-blue-800/30 hover:shadow-md border-2 border-transparent hover:border-blue-300 dark:hover:border-blue-500 rounded-lg m-1",
+    freezerHandleBar: "w-16 h-2 bg-gray-400/20 dark:bg-gray-600/20 rounded-full",
+    freezerInterior: "p-3 bg-gradient-to-b from-blue-50/20 to-blue-100/20 dark:from-blue-900/20 dark:to-blue-800/20 h-full cursor-pointer transition-all duration-300 hover:from-blue-100/40 hover:to-blue-200/40 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 hover:shadow-md border-2 border-transparent hover:border-blue-300/20 dark:hover:border-blue-500/20 rounded-lg m-1 backdrop-blur-sm",
     freezerTitle: "text-center mb-2",
     freezerTitleText: "text-sm font-semibold text-blue-800 dark:text-blue-200",
 
     // Refrigerator Section Classes
-    refrigeratorSection: "bg-white dark:bg-gray-800 h-1/2",
+    refrigeratorSection: "bg-white/20 dark:bg-gray-800/20 h-1/2 backdrop-blur-sm",
     refrigeratorHandle: "flex justify-center pt-2 pb-1",
-    refrigeratorHandleBar: "w-20 h-2 bg-gray-400 dark:bg-gray-600 rounded-full",
-    refrigeratorInterior: "p-3 bg-gradient-to-b from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 h-full cursor-pointer transition-all duration-300 hover:bg-emerald-100 dark:hover:bg-emerald-800/30 hover:shadow-md border-2 border-transparent hover:border-emerald-300 dark:hover:border-emerald-500 rounded-lg m-1",
+    refrigeratorHandleBar: "w-20 h-2 bg-gray-400/20 dark:bg-gray-600/20 rounded-full",
+    refrigeratorInterior: "p-3 bg-gradient-to-b from-emerald-50/20 to-emerald-100/20 dark:from-emerald-900/20 dark:to-emerald-800/20 h-full cursor-pointer transition-all duration-300 hover:from-emerald-100/40 hover:to-emerald-200/40 dark:hover:from-emerald-800/30 dark:hover:from-emerald-700/30 hover:shadow-md border-2 border-transparent hover:border-emerald-300/20 dark:hover:border-emerald-500/20 rounded-lg m-1 backdrop-blur-sm",
     refrigeratorTitle: "text-center mb-2",
     refrigeratorTitleText: "text-sm font-semibold text-gray-700 dark:text-gray-300",
 
@@ -34,11 +34,11 @@ export const styles = {
 
     // Modal Overlay Classes
     modalOverlay: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm",
-    modalContent: "w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-xl border-2 shadow-2xl",
+    modalContent: "w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-xl border-2 shadow-2xl backdrop-blur-md",
     modalPadding: "p-6",
 
     // Near Expiring Modal Classes
-    nearExpiringModal: "bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-600",
+    nearExpiringModal: "bg-gradient-to-r from-blue-50/70 to-blue-100/70 dark:from-blue-900/60 dark:to-blue-800/60 border-blue-200/60 dark:border-blue-600/60 backdrop-blur-md",
     nearExpiringHeader: "text-xl font-bold text-blue-800 dark:text-blue-200 flex items-center gap-2",
     nearExpiringBackButton: "flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200",
     nearExpiringEmptyState: "text-center py-8",
@@ -48,7 +48,7 @@ export const styles = {
     nearExpiringGrid: "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3",
 
     // Fresh Items Modal Classes
-    freshItemsModal: "bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border-emerald-200 dark:border-emerald-600",
+    freshItemsModal: "bg-gradient-to-r from-emerald-50/70 to-emerald-100/70 dark:from-emerald-900/60 dark:to-emerald-800/60 border-emerald-200/60 dark:border-emerald-600/60 backdrop-blur-md",
     freshItemsHeader: "text-xl font-bold text-emerald-800 dark:text-emerald-200 flex items-center gap-2",
     freshItemsBackButton: "flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors duration-200",
     freshItemsEmptyState: "text-center py-8",
@@ -58,12 +58,12 @@ export const styles = {
     freshItemsGrid: "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3",
 
     // Item Card Classes
-    itemCard: "p-2 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:scale-[1.02] bg-white dark:bg-gray-700 shadow-sm",
+    itemCard: "p-2 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:scale-[1.02] bg-white/20 dark:bg-gray-700/20 shadow-sm backdrop-blur-sm",
     itemCardSelected: "border-blue-400 dark:border-blue-400 shadow-md",
     itemCardSelectedEmerald: "border-emerald-400 dark:border-emerald-400 shadow-md",
-    itemCardUnselected: "border-blue-200 dark:border-blue-600 hover:border-blue-300 dark:hover:border-blue-500",
-    itemCardUnselectedEmerald: "border-emerald-200 dark:border-emerald-600 hover:border-emerald-300 dark:hover:border-emerald-500",
-    itemCardFresh: "border-emerald-200 dark:border-emerald-600 hover:border-emerald-300 dark:hover:border-emerald-500",
+    itemCardUnselected: "border-blue-200/20 dark:border-blue-600/20 hover:border-blue-300/20 dark:hover:border-blue-500/20",
+    itemCardUnselectedEmerald: "border-emerald-200/20 dark:border-emerald-600/20 hover:border-emerald-300/20 dark:hover:border-emerald-500/20",
+    itemCardFresh: "border-emerald-200/20 dark:border-emerald-600/20 hover:border-emerald-300/20 dark:hover:border-emerald-500/20",
     itemCardFreshSelected: "border-emerald-400 dark:border-emerald-400 shadow-md",
 
     // Item Content Classes
@@ -80,7 +80,7 @@ export const styles = {
     // Item Details Classes
     itemDetails: "space-y-1",
     itemDetailRow: "flex items-center justify-between text-xs",
-    itemDetailLabel: "text-gray-600 dark:text-gray-400",
+    itemDetailLabel: "text-gray-600 dark:text-gray-300",
     itemDetailValue: "font-medium text-gray-800 dark:text-white",
     itemQuantityBadge: "text-xs font-medium px-1 py-0.5 rounded-full",
     itemQuantityBadgeBlue: "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200",
@@ -88,58 +88,58 @@ export const styles = {
     itemExpiryText: "text-emerald-600 dark:text-emerald-400 font-medium",
 
     // Selected Items Section Classes
-    selectedItemsContainer: "mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-600",
-    selectedItemsHeader: "text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2",
+    selectedItemsContainer: "mt-4 p-4 bg-blue-50/20 dark:bg-blue-900/20 rounded-xl border-2 border-blue-200/20 dark:border-blue-600/20 backdrop-blur-sm",
+    selectedItemsHeader: "text-lg font-semibold text-white mb-2",
     selectedItemsTags: "flex flex-wrap gap-2",
-    selectedItemTag: "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200",
+    selectedItemTag: "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100/20 dark:bg-blue-800/20 text-blue-800 dark:text-blue-200",
     selectedItemRemoveButton: "ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200",
     selectedItemsActions: "flex space-x-3",
     createDishButton: "px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200",
     clearAllButton: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200",
 
     // Add Item Modal Classes
-    addItemModal: "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600",
-    addItemHeader: "text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2",
+    addItemModal: "bg-white/20 dark:bg-gray-800/20 border-gray-200/20 dark:border-gray-600/20 backdrop-blur-md",
+    addItemHeader: "text-xl font-bold text-white flex items-center gap-2",
     addItemModalIcon: "w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center",
     addItemCloseButton: "flex items-center gap-2 px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors duration-200",
-    addItemDescription: "text-gray-600 dark:text-gray-300 text-center",
+    addItemDescription: "text-white text-center",
     addItemGrid: "grid grid-cols-2 md:grid-cols-3 gap-4",
 
     // Add Item Card Classes
-    addItemCard: "p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200",
+    addItemCard: "p-4 bg-gray-50/20 dark:bg-gray-700/20 rounded-lg border-2 border-gray-200/20 dark:border-gray-600/20 hover:border-blue-300/20 dark:hover:border-blue-500/20 transition-all duration-200 backdrop-blur-sm",
     addItemCardContent: "text-center mb-3",
     addItemCardImage: "mb-2",
     addItemCardName: "font-semibold text-gray-800 dark:text-white text-sm",
     addItemCardDetails: "space-y-2 mb-3",
     addItemCardRow: "flex items-center justify-between text-xs",
-    addItemCardLabel: "text-gray-600 dark:text-gray-400",
+    addItemCardLabel: "text-gray-600 dark:text-gray-300",
     addItemCardValue: "font-medium text-gray-800 dark:text-white",
     addItemCardButton: "w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors duration-200 hover:scale-105",
 
     // Dishes Section Classes
     dishesContainer: "mt-8",
     dishesHeader: "flex items-center justify-between mb-4",
-    dishesTitle: "text-xl font-semibold text-gray-800 dark:text-white",
+    dishesTitle: "text-xl font-semibold text-white",
     clearAllDishesButton: "px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg font-medium transition-colors duration-200",
-    dishesEmptyState: "text-center py-8 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200 dark:border-yellow-600",
+    dishesEmptyState: "text-center py-8 bg-gradient-to-r from-yellow-50/20 to-orange-50/20 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200/20 dark:border-yellow-600/20 backdrop-blur-sm",
     dishesEmptyIcon: "w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600",
-    dishesEmptyTitle: "text-lg font-medium text-gray-800 dark:text-white",
-    dishesEmptySubtitle: "text-sm text-gray-500 dark:text-gray-400",
+    dishesEmptyTitle: "text-lg font-medium text-white",
+    dishesEmptySubtitle: "text-sm text-white",
     dishesList: "space-y-4",
 
     // Dish Card Classes
-    dishCard: "p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200 dark:border-yellow-600 shadow-sm",
+    dishCard: "p-4 bg-gradient-to-r from-yellow-50/20 to-orange-50/20 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200/20 dark:border-yellow-600/20 shadow-sm backdrop-blur-sm",
     dishHeader: "flex items-center justify-between mb-3",
     dishInfo: "flex items-center space-x-3",
     dishIcon: "w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center",
     dishIconSvg: "w-4 h-4 text-white",
-    dishTitle: "text-sm font-medium text-gray-600 dark:text-gray-300",
+    dishTitle: "text-sm font-medium text-white",
     dishActions: "flex items-center space-x-2",
     generateRecipeButton: "px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-md transition-colors duration-200",
     removeDishButton: "text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200",
     dishItemsGrid: "grid grid-cols-2 md:grid-cols-4 gap-2",
-    dishItemCard: "flex items-center justify-between p-2 bg-white dark:bg-gray-700 rounded-lg border border-yellow-300 dark:border-yellow-500",
-    dishItemName: "text-sm text-gray-800 dark:text-white font-medium",
+    dishItemCard: "flex items-center justify-between p-2 bg-white/20 dark:bg-gray-700/20 rounded-lg border border-yellow-300/20 dark:border-yellow-500/20 backdrop-blur-sm",
+    dishItemName: "text-sm text-white font-medium",
     dishItemRemoveButton: "text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200",
 
     // Text & Content Classes
