@@ -4,19 +4,6 @@ import { useLocation } from "react-router-dom";
 import FloatingNav from "../components/FloatingNav";
 import "../cooking.css";
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-const instructions = [
-  "Preheat the oven to 350°F (175°C).",
-  "Mix flour and sugar in a bowl.",
-  "Add eggs and whisk until smooth.",
-  "Pour batter into a greased pan.",
-  "Bake for 30 minutes.",
-  "Let cool before serving."
-=======
-// Local step shape (time optional for backward compatibility)
-interface LocalStep { instruction: string; time?: number }
-=======
 // Local step shape (time optional for backward compatibility)
 interface LocalStep { instruction: string; time?: number }
 
@@ -29,18 +16,8 @@ const FALLBACK_INSTRUCTIONS: LocalStep[] = [
   { instruction: "Bake for 30 minutes.", time: 30 },
   { instruction: "Let cool before serving.", time: 10 }
 ];
->>>>>>> Stashed changes
 
-// Fallback demo instructions (used only if nothing in state or storage)
-const FALLBACK_INSTRUCTIONS: LocalStep[] = [
-  { instruction: "Preheat the oven to 350°F (175°C).", time: 5 },
-  { instruction: "Mix flour and sugar in a bowl.", time: 3 },
-  { instruction: "Add eggs and whisk until smooth.", time: 4 },
-  { instruction: "Pour batter into a greased pan.", time: 2 },
-  { instruction: "Bake for 30 minutes.", time: 30 },
-  { instruction: "Let cool before serving.", time: 10 }
->>>>>>> Stashed changes
-];
+const STORAGE_KEY = "cookingSession:v1"; // versioned in case schema changes later
 
 export function meta() {
   return [{ title: "Cooking" }];
