@@ -9,6 +9,15 @@
     transition: all 0.3s ease;
 }
 
+.audio-assistant.minimal {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    backdrop-filter: none;
+}
+
 .audio-assistant:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
@@ -202,6 +211,31 @@
     border: 1px solid rgba(108, 117, 125, 0.2);
     text-align: center;
     color: #6c757d;
+}
+
+
+
+.fallback-text {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.8;
+}
+
+.retry-btn {
+    background: rgba(78, 205, 196, 0.2);
+    border: 1px solid rgba(78, 205, 196, 0.4);
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin-top: 12px;
+    color: #4ecdc4;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.retry-btn:hover {
+    background: rgba(78, 205, 196, 0.3);
+    border-color: rgba(78, 205, 196, 0.6);
 }
 
 /* Animations */

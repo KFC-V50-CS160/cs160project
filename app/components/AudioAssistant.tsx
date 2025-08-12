@@ -1,20 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AudioService } from '../services/audioService';
 import { AIService } from '../services/aiService';
+import type { RecipeContext } from '../services/aiService';
 
 interface AudioAssistantProps {
-    onTranscript?: (text: string) => void;
-    onResponse?: (text: string) => void;
     onStepChange?: (stepChange: number) => void;
-    recipeDetails?: string;
+    recipeContext?: RecipeContext;
 }
 
-export default function AudioAssistant({ onTranscript, onResponse, onStepChange, recipeDetails }: AudioAssistantProps) {
+export default function AudioAssistant({ onStepChange, recipeContext }: AudioAssistantProps) {
     const [isListening, setIsListening] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
-    const [transcript, setTranscript] = useState('');
-    const [aiResponse, setAiResponse] = useState('');
-    const [error, setError] = useState('');
     const [audioLevel, setAudioLevel] = useState(0);
 
     const audioServiceRef = useRef<AudioService | null>(null);
@@ -22,13 +18,10 @@ export default function AudioAssistant({ onTranscript, onResponse, onStepChange,
     const animationFrameRef = useRef<number | null>(null);
 
     const handleTranscript = async (text: string) => {
-        setTranscript(text);
-        onTranscript?.(text);
-
-        // Process with AI
+        // Process with AI silently
         if (aiServiceRef.current) {
             try {
-                const aiResponse = await aiServiceRef.current.processQuestion(text, recipeDetails);
+                const aiResponse = await aiServiceRef.current.processQuestion(text, recipeContext);
 
                 // Handle step changes first
                 if (aiResponse.stepChange !== undefined && onStepChange) {
@@ -37,31 +30,18 @@ export default function AudioAssistant({ onTranscript, onResponse, onStepChange,
                     return;
                 }
 
-                // Only show and speak responses that aren't step changes
-                setAiResponse(aiResponse.response);
-                onResponse?.(aiResponse.response);
-
-                // Speak the response
+                // Speak the response silently (no UI display)
                 if (audioServiceRef.current) {
                     audioServiceRef.current.speak(aiResponse.response);
                 }
             } catch (error) {
                 console.error('AI processing error:', error);
-                const errorResponse = "I'm sorry, I encountered an error processing your request. Please try again.";
-                setAiResponse(errorResponse);
-                onResponse?.(errorResponse);
-
-                if (audioServiceRef.current) {
-                    audioServiceRef.current.speak(errorResponse);
-                }
+                // Don't show error in UI, just log it
             }
         }
     };
 
-    const handleError = (errorMessage: string) => {
-        setError(errorMessage);
-        setTimeout(() => setError(''), 5000);
-    };
+
 
     const handleStateChange = (state: 'idle' | 'listening' | 'processing' | 'speaking') => {
         setIsListening(state === 'listening');
@@ -69,14 +49,17 @@ export default function AudioAssistant({ onTranscript, onResponse, onStepChange,
     };
 
     useEffect(() => {
-        // Initialize services
-        audioServiceRef.current = new AudioService({
-            onTranscript: handleTranscript,
-            onError: handleError,
-            onStateChange: handleStateChange
-        });
+        // Initialize services synchronously for instant availability
+        try {
+            audioServiceRef.current = new AudioService({
+                onTranscript: handleTranscript,
+                onStateChange: handleStateChange
+            });
 
-        aiServiceRef.current = new AIService();
+            aiServiceRef.current = new AIService();
+        } catch (error) {
+            console.error('Failed to initialize audio services:', error);
+        }
 
         return () => {
             if (audioServiceRef.current) {
@@ -87,17 +70,24 @@ export default function AudioAssistant({ onTranscript, onResponse, onStepChange,
                 cancelAnimationFrame(animationFrameRef.current);
             }
         };
-    }, [handleTranscript, handleError, handleStateChange]);
+    }, [handleTranscript, handleStateChange]);
 
     const toggleListening = async () => {
-        if (!audioServiceRef.current) return;
+        if (!audioServiceRef.current) {
+            console.error('Audio service not initialized');
+            return;
+        }
 
         if (isListening) {
             audioServiceRef.current.stopListening();
         } else {
-            const success = await audioServiceRef.current.startListening();
-            if (!success) {
-                setError('Failed to start listening. Please check microphone permissions.');
+            try {
+                const success = await audioServiceRef.current.startListening();
+                if (!success) {
+                    console.warn('Failed to start listening');
+                }
+            } catch (error) {
+                console.error('Listening error:', error);
             }
         }
     };
@@ -127,22 +117,24 @@ export default function AudioAssistant({ onTranscript, onResponse, onStepChange,
         };
     }, [isListening]);
 
-    if (!audioServiceRef.current || !audioServiceRef.current.isSupported()) {
-        return (
-            <div className="audio-assistant unsupported">
-                <p>Audio features are not supported in this browser.</p>
-            </div>
-        );
+    // Always show the audio interface - let errors be handled gracefully
+    // Only show unsupported message if we're absolutely certain it won't work
+    if (audioServiceRef.current && !audioServiceRef.current.isSupported() && typeof window !== 'undefined') {
+        // Check if we're in a browser environment that definitely doesn't support audio
+        const isDefinitelyUnsupported = !('mediaDevices' in navigator) && !('speechSynthesis' in window);
+
+        if (isDefinitelyUnsupported) {
+            return (
+                <div className="audio-assistant unsupported">
+                    <p>Audio features are not supported in this browser.</p>
+                    <p className="fallback-text">You can still use the cooking interface without voice commands.</p>
+                </div>
+            );
+        }
     }
 
     return (
-        <div className="audio-assistant">
-            {error && (
-                <div className="error-message">
-                    {error}
-                </div>
-            )}
-
+        <div className="audio-assistant minimal">
             <div className="audio-controls">
                 <button
                     className={`audio-btn ${isListening ? 'listening' : ''} ${isSpeaking ? 'speaking' : ''}`}
@@ -178,26 +170,6 @@ export default function AudioAssistant({ onTranscript, onResponse, onStepChange,
                         ⏹️
                     </button>
                 )}
-            </div>
-
-            {transcript && (
-                <div className="transcript">
-                    <h4>You said:</h4>
-                    <p>{transcript}</p>
-                </div>
-            )}
-
-            {aiResponse && (
-                <div className="ai-response">
-                    <h4>Assistant:</h4>
-                    <p>{aiResponse}</p>
-                </div>
-            )}
-
-            <div className="audio-status">
-                {isListening && <span className="status listening">Listening...</span>}
-                {isSpeaking && <span className="status speaking">Speaking...</span>}
-                {!isListening && !isSpeaking && <span className="status idle">Ready to listen</span>}
             </div>
         </div>
     );

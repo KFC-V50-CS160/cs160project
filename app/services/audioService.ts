@@ -161,12 +161,40 @@ export class AudioService {
     }
 
     isSupported(): boolean {
-        return !!(this.recognition || this.synthesis);
+        // Be more permissive - assume support unless we're certain it won't work
+        // This ensures the audio interface shows up immediately
+        if (typeof window === 'undefined') return false; // Server-side
+
+        // Check for basic audio capabilities
+        const hasMediaDevices = 'mediaDevices' in navigator;
+        const hasGetUserMedia = hasMediaDevices && 'getUserMedia' in navigator.mediaDevices;
+        const hasSpeechSynthesis = 'speechSynthesis' in window;
+        const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+
+        // We're supported if we have any audio capabilities
+        // Even if some features fail, we can still show the interface
+        return hasMediaDevices || hasSpeechSynthesis || hasSpeechRecognition;
     }
 
     getState(): 'idle' | 'listening' | 'processing' | 'speaking' {
         if (this.isListening) return 'listening';
         if (this.isSpeaking) return 'speaking';
         return 'idle';
+    }
+
+    isReady(): boolean {
+        return this.recognition !== null || this.synthesis !== null;
+    }
+
+    // Force re-initialization if needed
+    async reinitialize(): Promise<boolean> {
+        try {
+            this.initSpeechRecognition();
+            this.initSpeechSynthesis();
+            return this.isSupported();
+        } catch (error) {
+            console.warn('Failed to reinitialize audio service:', error);
+            return false;
+        }
     }
 } 

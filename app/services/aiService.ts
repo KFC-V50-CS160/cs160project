@@ -51,6 +51,18 @@ export interface NogginResponse {
     stepChange?: number; // +1, -1, 0, +2, etc.
 }
 
+export interface RecipeContext {
+    recipeTitle: string;
+    currentStep: number;
+    totalSteps: number;
+    steps: Array<{
+        index: number;
+        content: string;
+        rowNumber: number;
+        time: number;
+    }>;
+}
+
 export class AIService {
     private questions: CookingQuestion[];
     private nogginUrl: string;
@@ -62,7 +74,7 @@ export class AIService {
         this.nogginToken = 'rg_v1_gjkt17b9hkufv88oqw5443wcya6qbmtqs7kt_ngk';
     }
 
-    async processQuestion(userInput: string, recipeDetails?: string): Promise<NogginResponse> {
+    async processQuestion(userInput: string, recipeContext?: RecipeContext): Promise<NogginResponse> {
         const input = userInput.toLowerCase();
 
         // Check for step navigation commands first
@@ -82,9 +94,41 @@ export class AIService {
             };
         }
 
+        // Check for specific step jumps
+        if (input.includes('first step') || input.includes('start') || input.includes('beginning')) {
+            if (recipeContext) {
+                const stepChange = -recipeContext.currentStep;
+                return {
+                    response: `Jumping to first step.`,
+                    stepChange: stepChange
+                };
+            }
+        }
+
+        if (input.includes('last step') || input.includes('end') || input.includes('final')) {
+            if (recipeContext) {
+                const stepChange = (recipeContext.totalSteps - 1) - recipeContext.currentStep;
+                return {
+                    response: `Jumping to last step.`,
+                    stepChange: stepChange
+                };
+            }
+        }
+
+        // Check for specific row numbers
+        const rowMatch = input.match(/(?:go to|jump to|step|row)\s*(\d+)/i);
+        if (rowMatch && recipeContext) {
+            const targetRow = parseInt(rowMatch[1]) - 1; // Convert to 0-based index
+            const stepChange = targetRow - recipeContext.currentStep;
+            return {
+                response: `Jumping to step ${targetRow + 1}.`,
+                stepChange: stepChange
+            };
+        }
+
         // Try to get response from Noggin
         try {
-            const nogginResponse = await this.callNoggin(userInput, recipeDetails);
+            const nogginResponse = await this.callNoggin(userInput, recipeContext);
             return nogginResponse;
         } catch (error) {
             console.warn('Noggin call failed, falling back to local responses:', error);
@@ -92,7 +136,13 @@ export class AIService {
         }
     }
 
-    private async callNoggin(userInput: string, recipeDetails?: string): Promise<NogginResponse> {
+    private async callNoggin(userInput: string, recipeContext?: RecipeContext): Promise<NogginResponse> {
+        // Format recipe details for Noggin
+        let recipeDetails = '';
+        if (recipeContext) {
+            recipeDetails = `Recipe: ${recipeContext.recipeTitle}\nCurrent step: ${recipeContext.currentStep + 1}\nTotal steps: ${recipeContext.totalSteps}\n\nSteps:\n${recipeContext.steps.map((step, index) => `Row ${step.rowNumber}: ${step.content}`).join('\n')}`;
+        }
+
         const response = await fetch(this.nogginUrl, {
             method: 'POST',
             headers: {
@@ -101,7 +151,8 @@ export class AIService {
             },
             body: JSON.stringify({
                 userprompt: userInput,
-                recipedetail: recipeDetails || '',
+                recipedetail: recipeDetails,
+                currentstep: recipeContext ? recipeContext.currentStep + 1 : 1,
             }),
         });
 

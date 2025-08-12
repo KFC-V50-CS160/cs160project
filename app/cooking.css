@@ -367,6 +367,22 @@
 	animation: stepFlash 0.5s ease-out;
 }
 
+/* Step time styling */
+.step-time {
+	color: rgba(255, 255, 255, 0.7);
+	font-size: 0.9em;
+	margin-left: 8px;
+}
+
+.step-time em {
+	font-style: italic;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+.step-content {
+	display: inline;
+}
+
 @keyframes stepFlash {
 	0% {
 		background: rgba(78, 205, 196, 0.3);
