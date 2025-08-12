@@ -2,7 +2,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import FloatingNav from "../components/FloatingNav";
+import AudioAssistant from "../components/AudioAssistant";
 import "../cooking.css";
+import "../audio-assistant.css";
 
 // Fallback demo instructions (used only if nothing in state or storage)
 const FALLBACK_INSTRUCTIONS = [
@@ -31,6 +33,27 @@ export default function Cooking() {
   const [recipeTitle, setRecipeTitle] = useState<string>("Recipe Title");
   const [steps, setSteps] = useState<string[]>(FALLBACK_INSTRUCTIONS);
   const [hasSession, setHasSession] = useState(false); // true when a recipe has been chosen before
+  const [audioTranscript, setAudioTranscript] = useState<string>('');
+  const [audioResponse, setAudioResponse] = useState<string>('');
+  const [stepChangeFlash, setStepChangeFlash] = useState(false);
+
+  // Function to handle step changes from AI
+  const handleStepChange = (stepChange: number) => {
+    if (stepChange !== 0) {
+      setCurrentStep((prev) => {
+        const newStep = prev + stepChange;
+        // Ensure step stays within bounds
+        return Math.max(0, Math.min(newStep, steps.length - 1));
+      });
+
+      // Clear the transcript for step changes to keep UI clean
+      setAudioTranscript('');
+
+      // Brief flash effect to indicate step change
+      setStepChangeFlash(true);
+      setTimeout(() => setStepChangeFlash(false), 500);
+    }
+  };
 
   // On mount decide source of truth: navigation state (fresh) or localStorage (resume)
   useEffect(() => {
@@ -106,8 +129,8 @@ export default function Cooking() {
   // Keyboard controls for skip/rewind
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-  if (["ArrowRight", "ArrowDown", " ", "Spacebar"].includes(e.key)) {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+      if (["ArrowRight", "ArrowDown", " ", "Spacebar"].includes(e.key)) {
+        setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
       } else if (["ArrowLeft", "ArrowUp"].includes(e.key)) {
         setCurrentStep((prev) => Math.max(prev - 1, 0));
       }
@@ -119,9 +142,6 @@ export default function Cooking() {
   // Button handlers
   const handleSkip = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   const handleRewind = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
-  const handleAsk = () => {
-    alert("Ask me anything!");
-  };
 
   // Only show 5 steps at a time, centered around currentStep
   const visibleCount = 5;
@@ -174,7 +194,7 @@ export default function Cooking() {
                 return (
                   <div
                     key={actualIdx}
-                    className={`lyric-step ${distClass}${actualIdx === currentStep ? " selected" : ""}`}
+                    className={`lyric-step ${distClass}${actualIdx === currentStep ? " selected" : ""}${actualIdx === currentStep && stepChangeFlash ? " step-flash" : ""}`}
                     onClick={() => setCurrentStep(actualIdx)}
                   >
                     {step}
@@ -186,18 +206,36 @@ export default function Cooking() {
           </div>
         </div>
         <FloatingNav />
+
+        {/* Audio Interaction Display - Only show for actual Q&A, not step changes */}
+        {audioResponse && !audioTranscript.includes('skip') && !audioTranscript.includes('next') && !audioTranscript.includes('back') && !audioTranscript.includes('previous') && (
+          <div className="audio-interaction-display">
+            {audioTranscript && (
+              <div className="audio-transcript">
+                <strong>You asked:</strong> {audioTranscript}
+              </div>
+            )}
+            <div className="audio-response">
+              <strong>Assistant:</strong> {audioResponse}
+            </div>
+          </div>
+        )}
+
         <div className="controls custom-controls-layout controls-above-nav">
           <div className="controls-left">
             <button className="control-btn" onClick={handleRewind} aria-label="Rewind">⏪</button>
           </div>
           <div className="controls-center">
-            <button className="control-btn ask-btn" onClick={handleAsk} aria-label="Ask me anything">
-              <span role="img" aria-label="microphone">🎤</span> Ask me anything
-            </button>
+            <AudioAssistant
+              onTranscript={setAudioTranscript}
+              onResponse={setAudioResponse}
+              onStepChange={handleStepChange}
+              recipeDetails={`Recipe: ${recipeTitle}\nSteps: ${steps.join('\n')}`}
+            />
           </div>
-            <div className="controls-right">
-              <button className="control-btn" onClick={handleSkip} aria-label="Skip">⏩</button>
-            </div>
+          <div className="controls-right">
+            <button className="control-btn" onClick={handleSkip} aria-label="Skip">⏩</button>
+          </div>
         </div>
       </div>
     </div>
