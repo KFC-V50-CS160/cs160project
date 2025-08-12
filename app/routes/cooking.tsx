@@ -99,17 +99,11 @@ export default function Cooking() {
   return (
     <div className="cooking-page">
       <div className="cooking-content">
-        <div className="main-align-container">
-          <div className="controls custom-controls-layout" style={{ position: 'static', marginTop: '16px', marginBottom: '0' }}>
-            <div className="controls-left">
-              <button className="control-btn" onClick={handleBack} aria-label="Back" style={{ marginRight: '0' }}>
-                ⬅️
-              </button>
-            </div>
-            <div className="controls-center" />
-            <div className="controls-right" />
-          </div>
-          <h1 className="recipe-title" style={{ marginTop: '32px', marginBottom: '16px', textAlign: 'left' }}>{recipeTitle}</h1>
+        <div className="cooking-header">
+          <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
+          <h1 className="recipe-title" style={{ margin: '0', textAlign: 'left' }}>{recipeTitle}</h1>
+        </div>
+        <div className="main-align-container" style={{ marginTop: '140px' }}>
           <div className="lyric-instructions-wrapper" style={{ marginTop: '0', textAlign: 'left' }}>
             <div className="lyric-instructions-cutout lyric-instructions-cutout-top" />
             <div className="lyric-instructions" ref={containerRef}>
