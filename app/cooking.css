@@ -232,6 +232,15 @@
 	box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
+/* Slightly smaller title style for initial "choose a recipe" prompt */
+.choose-recipe-message {
+	font-size: 1.6rem; /* slightly smaller than .recipe-title (2rem) */
+	font-weight: 700;
+	text-align: center;
+	margin: 0;
+	padding: 0 8px;
+}
+
 /* Position the bottom cooking controls just above the floating nav pill */
 .controls-above-nav {
 	position: fixed !important;

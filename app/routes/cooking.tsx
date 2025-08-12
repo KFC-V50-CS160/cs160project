@@ -4,7 +4,8 @@ import { useLocation } from "react-router-dom";
 import FloatingNav from "../components/FloatingNav";
 import "../cooking.css";
 
-const instructions = [
+// Fallback demo instructions (used only if nothing in state or storage)
+const FALLBACK_INSTRUCTIONS = [
   "Preheat the oven to 350°F (175°C).",
   "Mix flour and sugar in a bowl.",
   "Add eggs and whisk until smooth.",
@@ -12,6 +13,8 @@ const instructions = [
   "Bake for 30 minutes.",
   "Let cool before serving."
 ];
+
+const STORAGE_KEY = "cookingSession:v1"; // versioned in case schema changes later
 
 export function meta() {
   return [{ title: "Cooking" }];
@@ -23,21 +26,55 @@ export default function Cooking() {
   };
   const [currentStep, setCurrentStep] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Get instructions and title from route state
   const location = useLocation();
-  let instructions: string[] = [
-    "Preheat the oven to 350°F (175°C).",
-    "Mix flour and sugar in a bowl.",
-    "Add eggs and whisk until smooth.",
-    "Pour batter into a greased pan.",
-    "Bake for 30 minutes.",
-    "Let cool before serving."
-  ];
-  let recipeTitle = "Recipe Title";
-  if (location.state && Array.isArray(location.state.instructions)) {
-    instructions = location.state.instructions.map((step: any) => step.instruction || step);
-    recipeTitle = location.state.title || recipeTitle;
-  }
+
+  const [recipeTitle, setRecipeTitle] = useState<string>("Recipe Title");
+  const [steps, setSteps] = useState<string[]>(FALLBACK_INSTRUCTIONS);
+  const [hasSession, setHasSession] = useState(false); // true when a recipe has been chosen before
+
+  // On mount decide source of truth: navigation state (fresh) or localStorage (resume)
+  useEffect(() => {
+    const navState = location.state as any;
+    if (navState && Array.isArray(navState.instructions)) {
+      // Prefer freshly passed in data; normalise and persist
+      const normalized = navState.instructions.map((s: any) => s?.instruction || s).filter(Boolean);
+      if (normalized.length > 0) {
+        setSteps(normalized);
+      }
+      if (navState.title) setRecipeTitle(navState.title);
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            t: Date.now(),
+            title: navState.title || "Recipe Title",
+            instructions: normalized.length > 0 ? normalized : FALLBACK_INSTRUCTIONS
+          })
+        );
+      } catch (e) {
+        // non-fatal
+        console.warn("[Cooking] failed to persist session", e);
+      }
+      setHasSession(true);
+    } else {
+      // Attempt to resume from storage
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.instructions) && parsed.instructions.length) {
+            setSteps(parsed.instructions.map((s: any) => s?.instruction || s));
+            if (typeof parsed.title === "string" && parsed.title.trim()) {
+              setRecipeTitle(parsed.title);
+            }
+            setHasSession(true);
+          }
+        }
+      } catch (e) {
+        console.warn("[Cooking] failed to read previous session", e);
+      }
+    }
+  }, [location.state]);
 
   // Center the selected lyric line
   useEffect(() => {
@@ -69,18 +106,18 @@ export default function Cooking() {
   // Keyboard controls for skip/rewind
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (["ArrowRight", "ArrowDown", " ", "Spacebar"].includes(e.key)) {
-        setCurrentStep((prev) => Math.min(prev + 1, instructions.length - 1));
+  if (["ArrowRight", "ArrowDown", " ", "Spacebar"].includes(e.key)) {
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
       } else if (["ArrowLeft", "ArrowUp"].includes(e.key)) {
         setCurrentStep((prev) => Math.max(prev - 1, 0));
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [instructions.length]);
+  }, [steps.length]);
 
   // Button handlers
-  const handleSkip = () => setCurrentStep((prev) => Math.min(prev + 1, instructions.length - 1));
+  const handleSkip = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   const handleRewind = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
   const handleAsk = () => {
     alert("Ask me anything!");
@@ -90,11 +127,28 @@ export default function Cooking() {
   const visibleCount = 5;
   const half = Math.floor(visibleCount / 2);
   let start = Math.max(0, currentStep - half);
-  let end = Math.min(instructions.length, start + visibleCount);
+  let end = Math.min(steps.length, start + visibleCount);
   if (end - start < visibleCount) {
     start = Math.max(0, end - visibleCount);
   }
-  const visibleSteps = instructions.slice(start, end);
+  const visibleSteps = steps.slice(start, end);
+
+  if (!hasSession) {
+    return (
+      <div className="cooking-page">
+        <div className="cooking-content">
+          <div className="cooking-header">
+            <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
+          </div>
+          <div className="main-align-container" style={{ flex: 1, marginTop: '88px' }}>
+            <div style={{ height: '33vh', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+              <p className="choose-recipe-message">Let's choose a recipe first!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="cooking-page">
@@ -103,7 +157,7 @@ export default function Cooking() {
           <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
           <h1 className="recipe-title" style={{ margin: '0', textAlign: 'left' }}>{recipeTitle}</h1>
         </div>
-  <div className="main-align-container">
+        <div className="main-align-container">
           <div className="lyric-instructions-wrapper" style={{ marginTop: '0', textAlign: 'left' }}>
             <div className="lyric-instructions-cutout lyric-instructions-cutout-top" />
             <div className="lyric-instructions" ref={containerRef}>
@@ -132,23 +186,18 @@ export default function Cooking() {
           </div>
         </div>
         <FloatingNav />
-        {/* Bottom controls relocated to sit just above the floating nav */}
         <div className="controls custom-controls-layout controls-above-nav">
           <div className="controls-left">
-            <button className="control-btn" onClick={handleRewind} aria-label="Rewind">
-              ⏪
-            </button>
+            <button className="control-btn" onClick={handleRewind} aria-label="Rewind">⏪</button>
           </div>
           <div className="controls-center">
             <button className="control-btn ask-btn" onClick={handleAsk} aria-label="Ask me anything">
               <span role="img" aria-label="microphone">🎤</span> Ask me anything
             </button>
           </div>
-          <div className="controls-right">
-            <button className="control-btn" onClick={handleSkip} aria-label="Skip">
-              ⏩
-            </button>
-          </div>
+            <div className="controls-right">
+              <button className="control-btn" onClick={handleSkip} aria-label="Skip">⏩</button>
+            </div>
         </div>
       </div>
     </div>
