@@ -1,3 +1,72 @@
+.custom-controls-layout {
+	display: flex;
+	width: 90vw;
+	max-width: 32rem;
+	margin: 0 auto;
+	justify-content: space-between;
+	align-items: center;
+	position: sticky;
+	bottom: 16px;
+	background: #0a174e;
+	z-index: 10;
+}
+.controls-left {
+	flex: 1;
+	display: flex;
+	justify-content: flex-start;
+}
+.controls-center {
+		flex: 1;
+		display: flex;
+		justify-content: center;
+	}
+	.ask-btn {
+		min-width: 220px;
+		flex-shrink: 0;
+		flex-grow: 0;
+}
+.controls-right {
+	flex: 1;
+	display: flex;
+	justify-content: flex-end;
+}
+.main-align-container {
+	width: 90vw;
+	max-width: 32rem;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+.lyric-instructions-wrapper {
+		position: relative;
+		flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: stretch;
+			align-items: flex-start;
+		width: 90vw;
+		max-width: 32rem;
+		margin: 0 auto;
+		z-index: 1;
+}
+
+.lyric-instructions-cutout {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 32px;
+	pointer-events: none;
+	z-index: 2;
+}
+.lyric-instructions-cutout-top {
+	top: 0;
+	background: linear-gradient(to bottom, #0a174e 80%, transparent 100%);
+}
+.lyric-instructions-cutout-bottom {
+	bottom: 0;
+	background: linear-gradient(to top, #0a174e 80%, transparent 100%);
+}
 /* Cooking page styles */
 .cooking-page {
 	background: #0a174e;
@@ -8,6 +77,7 @@
 	align-items: center;
 	justify-content: flex-end;
 	font-family: Inter, sans-serif;
+	overflow-x: hidden; /* Prevent horizontal scroll from scaled children */
 }
 
 .cooking-content {
@@ -32,50 +102,45 @@
 
 
 .lyric-instructions {
-	flex: 1;
-	overflow-y: auto;
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	padding: 0 8px;
-	margin-bottom: 32px;
-	max-width: 98vw;
+				flex: 1;
+				overflow-y: auto;
+			overflow-x: hidden; /* Keep width fixed; no horizontal scroll */
+				display: flex;
+				flex-direction: column;
+					gap: 0;
+					width: 90vw;
+					max-width: 32rem;
+					margin: 0 auto;
+					padding: 40px 8px 40px 8px;
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+				margin-bottom: 0;
+				width: 100%;
+				max-width: 100%;
+					position: relative;
+					z-index: 1;
 }
 
 .lyric-step {
 	font-size: 1.2rem;
+	line-height: 1.5; /* Extra space to accommodate scaled selected state */
 	text-align: left;
+	width: 100%;
 	cursor: pointer;
 	opacity: 0.7;
-	transition: all 0.2s;
+	transition: background 0.2s, opacity 0.2s, box-shadow 0.2s, transform 0.18s ease-out; /* Scale for emphasis without reflow */
 	padding: 8px 0;
 	max-width: 100%;
-	word-break: keep-all;
+	word-break: break-word;
 	white-space: pre-line;
+	position: relative;
+	will-change: transform;
 }
 .lyric-step.selected {
-	font-size: 1.5rem;
-	font-weight: 700;
-	opacity: 1;
-	background: rgba(255,255,255,0.08);
-	border-radius: 8px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-	text-align: left;
-	max-width: 100%;
-	word-break: keep-all;
-	white-space: pre-line;
-}
-
-.lyric-step {
-	font-size: 1.2rem;
-	text-align: left;
-	cursor: pointer;
-	opacity: 0.7;
-	transition: all 0.2s;
-	padding: 8px 0;
-}
-.lyric-step.selected {
-	font-size: 1.5rem;
+	/* Visual enlargement without layout shift */
+	transform: scale(1.08); /* Slightly reduced to further reduce potential overflow */
+	transform-origin: left center;
 	font-weight: 700;
 	opacity: 1;
 	background: rgba(255,255,255,0.08);
@@ -85,11 +150,16 @@
 }
 
 .controls {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 0 8px;
-	margin-bottom: 48px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 8px;
+		margin-bottom: 0;
+			position: sticky;
+						bottom: 16px;
+			background: #0a174e;
+			z-index: 10;
+			margin-bottom: 8px;
 }
 .control-btn {
 	/* ...existing code... */
@@ -132,4 +202,26 @@
 	align-items: center;
 	gap: 8px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+/* Position the bottom cooking controls just above the floating nav pill */
+.controls-above-nav {
+	position: fixed !important;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: 96px; /* nav bottom (16px) + nav height (~64px) + gap */
+	width: 90vw;
+	max-width: 32rem;
+	background: rgba(10,23,78,0.92);
+	backdrop-filter: blur(8px);
+	border-radius: 48px;
+	padding: 8px 12px;
+	box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+	z-index: 30; /* above nav (which is  maybe lower default) */
+}
+
+@media (min-width: 768px) {
+	.controls-above-nav {
+		bottom: 110px; /* a bit more breathing room on larger screens */
+	}
 }
