@@ -1,0 +1,628 @@
+/* Home Page Styles */
+
+/* Layout & Container Classes */
+.pageContainer {
+    min-height: 100vh;
+    background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+    padding: 1rem;
+    padding-bottom: 5rem;
+}
+
+.dark .pageContainer {
+    background: linear-gradient(to bottom right, #111827, #1f2937);
+}
+
+.mainContainer {
+    max-width: 28rem;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Mobile Top Row Grid */
+.topRowGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+/* Card Base Classes */
+.cardBase {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e5e7eb;
+}
+
+.dark .cardBase {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+/* LLM Query Section Classes */
+.llmContainer {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e5e7eb;
+}
+
+.dark .llmContainer {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.llmTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.dark .llmTitle {
+    color: #ffffff;
+}
+
+.llmSubtitle {
+    font-size: 1.125rem;
+    color: #4b5563;
+    margin-bottom: 1rem;
+}
+
+.dark .llmSubtitle {
+    color: #d1d5db;
+}
+
+.llmPlayButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background-color: #3b82f6;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+}
+
+.llmPlayIcon {
+    width: 1rem;
+    height: 1rem;
+    color: #ffffff;
+}
+
+.llmInputContainer {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.llmInput {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    color: #1f2937;
+}
+
+.llmInput::placeholder {
+    color: #6b7280;
+}
+
+.llmInput:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.dark .llmInput {
+    border-color: #4b5563;
+    background-color: #374151;
+    color: #ffffff;
+}
+
+.dark .llmInput::placeholder {
+    color: #9ca3af;
+}
+
+.llmButton {
+    padding: 0.75rem 1.5rem;
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.llmButton:hover {
+    background-color: #2563eb;
+}
+
+/* LLM Modal Styles */
+.llmModalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.llmModalContent {
+    width: 100%;
+    max-width: 28rem;
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 2px solid #e5e7eb;
+}
+
+.dark .llmModalContent {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.llmModalTitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.dark .llmModalTitle {
+    color: #ffffff;
+}
+
+.llmModalInputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.llmModalInput {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    color: #1f2937;
+}
+
+.llmModalInput::placeholder {
+    color: #6b7280;
+}
+
+.llmModalInput:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.dark .llmModalInput {
+    border-color: #4b5563;
+    background-color: #374151;
+    color: #ffffff;
+}
+
+.dark .llmModalInput::placeholder {
+    color: #9ca3af;
+}
+
+.llmModalButtonContainer {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.llmModalButton {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.llmModalButton:hover {
+    background-color: #2563eb;
+}
+
+.llmModalCancelButton {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background-color: #6b7280;
+    color: #ffffff;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.llmModalCancelButton:hover {
+    background-color: #4b5563;
+}
+
+/* Reminders Section Classes */
+.remindersContainer {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e5e7eb;
+}
+
+.dark .remindersContainer {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.remindersTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.dark .remindersTitle {
+    color: #ffffff;
+}
+
+.remindersList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.reminderItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reminderLeft {
+    display: flex;
+    align-items: center;
+}
+
+.reminderDot {
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #ef4444;
+    border-radius: 9999px;
+    margin-right: 0.75rem;
+}
+
+.reminderName {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.dark .reminderName {
+    color: #ffffff;
+}
+
+.reminderDots {
+    color: #6b7280;
+    margin-left: 0.5rem;
+}
+
+.dark .reminderDots {
+    color: #9ca3af;
+}
+
+.reminderExpiry {
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.dark .reminderExpiry {
+    color: #d1d5db;
+}
+
+/* Recipe Section Base Classes */
+.recipeSection {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e5e7eb;
+}
+
+.dark .recipeSection {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+.recipeSectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.recipeSectionTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.dark .recipeSectionTitle {
+    color: #ffffff;
+}
+
+/* Scroll Controls */
+.scrollControls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.scrollButton {
+    padding: 0.5rem;
+    border-radius: 9999px;
+    background-color: #e5e7eb;
+    transition: background-color 0.2s;
+}
+
+.scrollButton:hover {
+    background-color: #d1d5db;
+}
+
+.dark .scrollButton {
+    background-color: #374151;
+}
+
+.dark .scrollButton:hover {
+    background-color: #4b5563;
+}
+
+.scrollIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #4b5563;
+}
+
+.dark .scrollIcon {
+    color: #d1d5db;
+}
+
+/* Recipe Scroll Container */
+.recipeScrollContainer {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+/* Hide scrollbars */
+.recipeScrollContainer {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.recipeScrollContainer::-webkit-scrollbar {
+    display: none;
+}
+
+/* Recipe Card Classes */
+.recipeCard {
+    flex-shrink: 0;
+    width: 16rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.recipeCard:hover {
+    border-color: #93c5fd;
+}
+
+.dark .recipeCard {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+.dark .recipeCard:hover {
+    border-color: #3b82f6;
+}
+
+.recipeCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.recipeImagePlaceholder {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    height: 8rem;
+    width: 100%;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark .recipeImagePlaceholder {
+    background-color: #4b5563;
+}
+
+.recipeImageText {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.dark .recipeImageText {
+    color: #6b7280;
+}
+
+.recipeFavoriteButton {
+    padding: 0.25rem;
+    border-radius: 9999px;
+    background-color: #d1d5db;
+    transition: background-color 0.2s;
+}
+
+.recipeFavoriteButton:hover {
+    background-color: #9ca3af;
+}
+
+.dark .recipeFavoriteButton {
+    background-color: #4b5563;
+}
+
+.dark .recipeFavoriteButton:hover {
+    background-color: #6b7280;
+}
+
+.recipeFavoriteIcon {
+    width: 1rem;
+    height: 1rem;
+    color: #4b5563;
+}
+
+.dark .recipeFavoriteIcon {
+    color: #d1d5db;
+}
+
+.recipeTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.dark .recipeTitle {
+    color: #ffffff;
+}
+
+.recipeStatusReady {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    color: #059669;
+}
+
+.dark .recipeStatusReady {
+    color: #34d399;
+}
+
+.recipeStatusMissing {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    color: #d97706;
+}
+
+.dark .recipeStatusMissing {
+    color: #fbbf24;
+}
+
+.recipeInfo {
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.dark .recipeInfo {
+    color: #d1d5db;
+}
+
+/* Saved Recipe Card Classes */
+.savedRecipeCard {
+    flex-shrink: 0;
+    width: 16rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.savedRecipeCard:hover {
+    border-color: #93c5fd;
+}
+
+.dark .savedRecipeCard {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+.dark .savedRecipeCard:hover {
+    border-color: #3b82f6;
+}
+
+.savedRecipeCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.savedRecipeImagePlaceholder {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    height: 8rem;
+    width: 100%;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark .savedRecipeImagePlaceholder {
+    background-color: #4b5563;
+}
+
+.savedRecipeImageText {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.dark .savedRecipeImageText {
+    color: #6b7280;
+}
+
+.savedRecipeFavoriteButton {
+    padding: 0.25rem;
+    border-radius: 9999px;
+    background-color: #d1d5db;
+    transition: background-color 0.2s;
+}
+
+.savedRecipeFavoriteButton:hover {
+    background-color: #9ca3af;
+}
+
+.dark .savedRecipeFavoriteButton {
+    background-color: #4b5563;
+}
+
+.dark .savedRecipeFavoriteButton:hover {
+    background-color: #6b7280;
+}
+
+.savedRecipeFavoriteIcon {
+    width: 1rem;
+    height: 1rem;
+    color: #4b5563;
+}
+
+.dark .savedRecipeFavoriteIcon {
+    color: #d1d5db;
+}
+
+.savedRecipeTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.dark .savedRecipeTitle {
+    color: #ffffff;
+}
