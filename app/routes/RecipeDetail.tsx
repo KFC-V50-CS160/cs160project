@@ -588,7 +588,15 @@ export default function RecipeDetailPage() {
   }, [hydrated, state, dishName]);
 
   const handleStartCooking = () => {
-    // TODO: route to /recipe/${dishName}/cook
+    // Route to /cooking and pass instructions and title via state
+    if (state.status === "success" && state.data) {
+      navigate("/cooking", {
+        state: {
+          instructions: state.data.complete_instructions,
+          title: state.data.title
+        }
+      });
+    }
     // TODO: analytics track start cooking
     // TODO: i18n
     // eslint-disable-next-line no-console
