@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import FloatingNav from "../components/FloatingNav";
 import "../cooking.css";
 
+<<<<<<< Updated upstream
 const instructions = [
   "Preheat the oven to 350°F (175°C).",
   "Mix flour and sugar in a bowl.",
@@ -11,6 +12,19 @@ const instructions = [
   "Pour batter into a greased pan.",
   "Bake for 30 minutes.",
   "Let cool before serving."
+=======
+// Local step shape (time optional for backward compatibility)
+interface LocalStep { instruction: string; time?: number }
+
+// Fallback demo instructions (used only if nothing in state or storage)
+const FALLBACK_INSTRUCTIONS: LocalStep[] = [
+  { instruction: "Preheat the oven to 350°F (175°C).", time: 5 },
+  { instruction: "Mix flour and sugar in a bowl.", time: 3 },
+  { instruction: "Add eggs and whisk until smooth.", time: 4 },
+  { instruction: "Pour batter into a greased pan.", time: 2 },
+  { instruction: "Bake for 30 minutes.", time: 30 },
+  { instruction: "Let cool before serving.", time: 10 }
+>>>>>>> Stashed changes
 ];
 
 export function meta() {
@@ -25,6 +39,7 @@ export default function Cooking() {
   const containerRef = useRef<HTMLDivElement>(null);
   // Get instructions and title from route state
   const location = useLocation();
+<<<<<<< Updated upstream
   let instructions: string[] = [
     "Preheat the oven to 350°F (175°C).",
     "Mix flour and sugar in a bowl.",
@@ -38,6 +53,77 @@ export default function Cooking() {
     instructions = location.state.instructions.map((step: any) => step.instruction || step);
     recipeTitle = location.state.title || recipeTitle;
   }
+=======
+
+  const [recipeTitle, setRecipeTitle] = useState<string>("Recipe Title");
+  const [steps, setSteps] = useState<LocalStep[]>(FALLBACK_INSTRUCTIONS);
+  const [hasSession, setHasSession] = useState(false); // true when a recipe has been chosen before
+
+  // On mount decide source of truth: navigation state (fresh) or localStorage (resume)
+  useEffect(() => {
+    const navState = location.state as any;
+    if (navState && Array.isArray(navState.instructions)) {
+      // Prefer freshly passed in data; normalize to LocalStep objects and persist
+      const normalized: LocalStep[] = navState.instructions
+        .map((s: any): LocalStep | null => {
+          if (!s) return null;
+          if (typeof s === 'string') return { instruction: s };
+          if (typeof s === 'object') {
+            const instruction = s.instruction || s.text || s.step || '';
+            if (!instruction) return null;
+            let time: number | undefined = undefined;
+            if (Number.isFinite(s.time)) time = Number(s.time);
+            return { instruction, time };
+          }
+          return null;
+        })
+        .filter(Boolean) as LocalStep[];
+      if (normalized.length > 0) {
+        setSteps(normalized);
+      }
+      if (navState.title) setRecipeTitle(navState.title);
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            t: Date.now(),
+            title: navState.title || "Recipe Title",
+            instructions: normalized.length > 0 ? normalized : FALLBACK_INSTRUCTIONS
+          })
+        );
+      } catch (e) {
+        console.warn("[Cooking] failed to persist session", e);
+      }
+      setHasSession(true);
+    } else {
+      // Attempt to resume from storage
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.instructions) && parsed.instructions.length) {
+            const restored: LocalStep[] = parsed.instructions.map((s: any) => {
+              if (typeof s === 'string') return { instruction: s };
+              if (s && typeof s === 'object') {
+                const instr = s.instruction || s.text || s.step || '';
+                const time = Number.isFinite(s.time) ? Number(s.time) : undefined;
+                return { instruction: instr, time };
+              }
+              return { instruction: '' };
+            }).filter((s: LocalStep) => s.instruction);
+            setSteps(restored.length ? restored : FALLBACK_INSTRUCTIONS);
+            if (typeof parsed.title === "string" && parsed.title.trim()) {
+              setRecipeTitle(parsed.title);
+            }
+            setHasSession(true);
+          }
+        }
+      } catch (e) {
+        console.warn("[Cooking] failed to read previous session", e);
+      }
+    }
+  }, [location.state]);
+>>>>>>> Stashed changes
 
   // Center the selected lyric line
   useEffect(() => {
@@ -117,13 +203,17 @@ export default function Cooking() {
                 } else {
                   distClass = 'dist-2'; // all future steps uniform fade
                 }
+                const timeText = Number.isFinite(step.time) ? `${(step.time as number)} min.` : undefined;
                 return (
                   <div
                     key={actualIdx}
                     className={`lyric-step ${distClass}${actualIdx === currentStep ? " selected" : ""}`}
                     onClick={() => setCurrentStep(actualIdx)}
                   >
-                    {step}
+                    {step.instruction}
+                    {timeText && (
+                      <span className="step-time"> &nbsp;- <em>{timeText}</em></span>
+                    )}
                   </div>
                 );
               })}

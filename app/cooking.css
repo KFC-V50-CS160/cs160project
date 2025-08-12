@@ -158,6 +158,13 @@
     transition: font-size 0.18s ease-out, background 0.2s, box-shadow 0.2s; /* smooth change */
 }
 
+/* Time indicator appended after each step */
+.step-time {
+	font-size: 0.95em;
+	opacity: 0.9;
+	font-style: italic;
+}
+
 .controls {
 		display: flex;
 		justify-content: space-between;
