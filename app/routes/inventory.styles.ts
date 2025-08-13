@@ -1,8 +1,9 @@
 // CSS Classes Organization
 export const styles = {
     // Layout & Container Classes
-    pageContainer: "min-h-screen bg-cover bg-center bg-no-repeat p-6",
-    mainContainer: "max-w-5xl mx-auto pb-24",
+    pageContainer: "min-h-screen bg-cover bg-center bg-no-repeat p-6 relative",
+    backgroundOverlay: "absolute inset-0 bg-black/30",
+    mainContainer: "max-w-5xl mx-auto pb-24 relative z-10",
     header: "text-center mb-12",
     headerTitle: "text-4xl font-bold text-white mb-3 tracking-tight",
     headerSubtitle: "text-xl text-white/90 font-medium",
@@ -105,6 +106,10 @@ export const styles = {
     addItemDescription: "text-white text-center",
     addItemGrid: "grid grid-cols-2 md:grid-cols-3 gap-4",
 
+    // Sticky Header and Scrollable Content
+    stickyHeader: "sticky top-0 z-10 bg-white/20 dark:bg-gray-800/20 backdrop-blur-md border-b border-white/20 dark:border-gray-600/20",
+    scrollableContent: "max-h-[calc(85vh-120px)] overflow-y-auto",
+
     // Add Item Card Classes
     addItemCard: "p-5 bg-white/10 dark:bg-gray-800/10 rounded-xl border border-white/20 dark:border-gray-600/20 hover:border-blue-300/40 dark:hover:border-blue-500/40 transition-all duration-300 backdrop-blur-md hover:shadow-lg hover:scale-[1.02]",
     addItemCardContent: "text-center mb-3",
@@ -120,7 +125,7 @@ export const styles = {
     dishesContainer: "mt-12",
     dishesHeader: "flex items-center justify-between mb-6",
     dishesTitle: "text-2xl font-bold text-white tracking-tight",
-    clearAllDishesButton: "px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg font-medium transition-colors duration-200",
+    clearAllDishesButton: "px-3 py-1 bg-red-500/70 hover:bg-red-600/70 text-white text-sm rounded-lg font-medium transition-colors duration-200",
     dishesEmptyState: "text-center py-8 bg-gradient-to-r from-yellow-50/20 to-orange-50/20 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200/20 dark:border-yellow-600/20 backdrop-blur-sm",
     dishesEmptyIcon: "w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600",
     dishesEmptyTitle: "text-lg font-medium text-white",
@@ -135,7 +140,7 @@ export const styles = {
     dishIconSvg: "w-4 h-4 text-white",
     dishTitle: "text-sm font-medium text-white",
     dishActions: "flex items-center space-x-2",
-    generateRecipeButton: "px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-md transition-colors duration-200",
+    generateRecipeButton: "px-3 py-1.5 bg-green-600/70 hover:bg-green-700/70 text-white text-xs font-medium rounded-md transition-colors duration-200",
     removeDishButton: "text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200",
     dishItemsGrid: "grid grid-cols-2 md:grid-cols-4 gap-2",
     dishItemCard: "flex items-center justify-between p-2 bg-white/20 dark:bg-gray-700/20 rounded-lg border border-yellow-300/20 dark:border-yellow-500/20 backdrop-blur-sm",
@@ -185,8 +190,8 @@ export const styles = {
     // Grid & Flexbox
     gridCols2: "grid grid-cols-2",
     gridCols2Md3: "grid grid-cols-2 md:grid-cols-3",
-    gridCols2Md4: "grid grid-cols-2 md:grid-cols-4",
-    gridCols2Md4Lg6: "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6",
+    gridCols2Md4: "grid grid-cols-2 md:grid-cols-4 gap-4",
+    gridCols2Md4Lg6: "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4",
     flexCenter: "flex items-center justify-center",
     flexBetween: "flex items-center justify-between",
     flexSpaceX3: "flex space-x-3",

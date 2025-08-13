@@ -125,9 +125,9 @@ function InventoryContent() {
             // Bakery
             "Buns": "Bakery", "Bread": "Bakery", "Croissants": "Bakery", "Bagels": "Bakery",
             "Muffins": "Bakery", "Cookies": "Bakery", "Cake": "Bakery", "Pizza Dough": "Bakery",
-            
+
             // Vegetables
-            "Lettuce": "Vegetables", "Carrots": "Vegetables", "Tomatoes": "Vegetables", 
+            "Lettuce": "Vegetables", "Carrots": "Vegetables", "Tomatoes": "Vegetables",
             "Onions": "Vegetables", "Potatoes": "Vegetables", "Cucumber": "Vegetables",
             "Bell Peppers": "Vegetables", "Spinach": "Vegetables", "Broccoli": "Vegetables",
             "Green Beans": "Vegetables", "Peas": "Vegetables", "Mushrooms": "Vegetables",
@@ -136,7 +136,7 @@ function InventoryContent() {
             "Radishes": "Vegetables", "Turnips": "Vegetables", "Sweet Potatoes": "Vegetables",
             "Pumpkin": "Vegetables", "Squash": "Vegetables", "Kale": "Vegetables",
             "Arugula": "Vegetables", "Cabbage": "Vegetables", "Brussels Sprouts": "Vegetables",
-            
+
             // Fruits
             "Apples": "Fruits", "Bananas": "Fruits", "Oranges": "Fruits", "Grapes": "Fruits",
             "Strawberries": "Fruits", "Blueberries": "Fruits", "Raspberries": "Fruits",
@@ -144,7 +144,7 @@ function InventoryContent() {
             "Plums": "Fruits", "Cherries": "Fruits", "Watermelon": "Fruits", "Cantaloupe": "Fruits",
             "Lemons": "Fruits", "Limes": "Fruits", "Grapefruit": "Fruits", "Kiwi": "Fruits",
             "Avocado": "Fruits",
-            
+
             // Meat & Seafood
             "Chicken": "Meat", "Bacon": "Meat", "Ham": "Meat", "Turkey": "Meat",
             "Ground Beef": "Meat", "Pork Chops": "Meat", "Steak": "Meat", "Lamb Chops": "Meat",
@@ -152,13 +152,13 @@ function InventoryContent() {
             "Fish": "Seafood", "Shrimp": "Seafood", "Tuna": "Seafood", "Salmon": "Seafood",
             "Cod": "Seafood", "Tilapia": "Seafood", "Crab": "Seafood", "Lobster": "Seafood",
             "Scallops": "Seafood", "Mussels": "Seafood", "Clams": "Seafood",
-            
+
             // Dairy
             "Milk": "Dairy", "Eggs": "Dairy", "Cheese": "Dairy", "Butter": "Dairy", "Yogurt": "Dairy",
             "Cream": "Dairy", "Sour Cream": "Dairy", "Cottage Cheese": "Dairy",
             "Cream Cheese": "Dairy", "Mozzarella": "Dairy", "Cheddar": "Dairy", "Parmesan": "Dairy",
             "Feta": "Dairy", "Goat Cheese": "Dairy", "Ice Cream": "Dairy",
-            
+
             // Condiments
             "Mayo": "Condiments", "Ketchup": "Condiments", "Mustard": "Condiments",
             "Pickles": "Condiments", "Jelly": "Condiments", "Peanut Butter": "Condiments", "Honey": "Condiments",
@@ -166,7 +166,7 @@ function InventoryContent() {
             "Ranch Dressing": "Condiments", "Italian Dressing": "Condiments", "Vinegar": "Condiments",
             "Olive Oil": "Condiments", "Coconut Oil": "Condiments", "Sesame Oil": "Condiments",
             "Worcestershire Sauce": "Condiments",
-            
+
             // Pantry
             "Sesame": "Pantry", "Rice": "Pantry", "Pasta": "Pantry", "Beans": "Pantry", "Corn": "Pantry",
             "Quinoa": "Pantry", "Oats": "Pantry", "Flour": "Pantry", "Sugar": "Pantry",
@@ -184,9 +184,9 @@ function InventoryContent() {
             // Bakery - shorter shelf life
             "Buns": "1 week", "Bread": "1 week", "Croissants": "3 days", "Bagels": "1 week",
             "Muffins": "1 week", "Cookies": "2 weeks", "Cake": "1 week", "Pizza Dough": "3 days",
-            
+
             // Vegetables - varies by type
-            "Lettuce": "1 week", "Carrots": "3 weeks", "Tomatoes": "1 week", 
+            "Lettuce": "1 week", "Carrots": "3 weeks", "Tomatoes": "1 week",
             "Onions": "2 months", "Potatoes": "2 months", "Cucumber": "1 week",
             "Bell Peppers": "1 week", "Spinach": "1 week", "Broccoli": "1 week",
             "Green Beans": "1 week", "Peas": "1 week", "Mushrooms": "1 week",
@@ -195,7 +195,7 @@ function InventoryContent() {
             "Radishes": "2 weeks", "Turnips": "2 weeks", "Sweet Potatoes": "2 months",
             "Pumpkin": "2 months", "Squash": "2 months", "Kale": "1 week",
             "Arugula": "1 week", "Cabbage": "2 months", "Brussels Sprouts": "1 week",
-            
+
             // Fruits - varies by type
             "Apples": "3 weeks", "Bananas": "1 week", "Oranges": "2 weeks", "Grapes": "1 week",
             "Strawberries": "1 week", "Blueberries": "1 week", "Raspberries": "1 week",
@@ -203,7 +203,7 @@ function InventoryContent() {
             "Plums": "1 week", "Cherries": "1 week", "Watermelon": "2 weeks", "Cantaloupe": "1 week",
             "Lemons": "3 weeks", "Limes": "3 weeks", "Grapefruit": "2 weeks", "Kiwi": "1 week",
             "Avocado": "1 week",
-            
+
             // Meat & Seafood - shorter shelf life
             "Chicken": "5 days", "Bacon": "1 week", "Ham": "1 week", "Turkey": "1 week",
             "Ground Beef": "3 days", "Pork Chops": "5 days", "Steak": "5 days", "Lamb Chops": "5 days",
@@ -211,13 +211,13 @@ function InventoryContent() {
             "Fish": "3 days", "Shrimp": "3 days", "Tuna": "3 days", "Salmon": "3 days",
             "Cod": "3 days", "Tilapia": "3 days", "Crab": "3 days", "Lobster": "3 days",
             "Scallops": "3 days", "Mussels": "3 days", "Clams": "3 days",
-            
+
             // Dairy - varies by type
             "Milk": "1 week", "Eggs": "3 weeks", "Cheese": "3 weeks", "Butter": "1 month", "Yogurt": "2 weeks",
             "Cream": "1 week", "Sour Cream": "2 weeks", "Cottage Cheese": "1 week",
             "Cream Cheese": "2 weeks", "Mozzarella": "2 weeks", "Cheddar": "3 weeks", "Parmesan": "6 months",
             "Feta": "2 weeks", "Goat Cheese": "2 weeks", "Ice Cream": "2 months",
-            
+
             // Condiments - longer shelf life
             "Mayo": "2 months", "Ketchup": "6 months", "Mustard": "1 year",
             "Pickles": "1 year", "Jelly": "1 year", "Peanut Butter": "6 months", "Honey": "2 years",
@@ -225,7 +225,7 @@ function InventoryContent() {
             "Ranch Dressing": "2 months", "Italian Dressing": "2 months", "Vinegar": "2 years",
             "Olive Oil": "2 years", "Coconut Oil": "2 years", "Sesame Oil": "1 year",
             "Worcestershire Sauce": "2 years",
-            
+
             // Pantry - longest shelf life
             "Sesame": "6 months", "Rice": "1 year", "Pasta": "1 year", "Beans": "1 year", "Corn": "1 year",
             "Quinoa": "1 year", "Oats": "1 year", "Flour": "1 year", "Sugar": "2 years",
@@ -241,32 +241,32 @@ function InventoryContent() {
     const defaultItems = [
         // Bakery
         "Buns", "Bread", "Croissants", "Bagels", "Muffins", "Cookies", "Cake", "Pizza Dough",
-        
+
         // Vegetables
         "Lettuce", "Carrots", "Tomatoes", "Onions", "Potatoes", "Cucumber",
         "Bell Peppers", "Spinach", "Broccoli", "Green Beans", "Peas", "Mushrooms", "Garlic",
         "Cauliflower", "Zucchini", "Eggplant", "Asparagus", "Celery", "Radishes", "Turnips",
         "Sweet Potatoes", "Pumpkin", "Squash", "Kale", "Arugula", "Cabbage", "Brussels Sprouts",
-        
+
         // Fruits
         "Apples", "Bananas", "Oranges", "Grapes", "Strawberries", "Blueberries", "Raspberries",
         "Pineapple", "Mango", "Peaches", "Pears", "Plums", "Cherries", "Watermelon", "Cantaloupe",
         "Lemons", "Limes", "Grapefruit", "Kiwi", "Avocado",
-        
+
         // Meat & Seafood
         "Chicken", "Bacon", "Ham", "Turkey", "Ground Beef", "Pork Chops", "Fish", "Shrimp",
         "Steak", "Lamb Chops", "Sausage", "Hot Dogs", "Salami", "Pepperoni", "Tuna", "Salmon",
         "Cod", "Tilapia", "Crab", "Lobster", "Scallops", "Mussels", "Clams",
-        
+
         // Dairy
         "Milk", "Eggs", "Cheese", "Butter", "Yogurt", "Cream", "Sour Cream", "Cottage Cheese",
         "Cream Cheese", "Mozzarella", "Cheddar", "Parmesan", "Feta", "Goat Cheese", "Ice Cream",
-        
+
         // Condiments
         "Mayo", "Ketchup", "Mustard", "Pickles", "Jelly", "Peanut Butter", "Honey",
         "Soy Sauce", "Hot Sauce", "BBQ Sauce", "Ranch Dressing", "Italian Dressing",
         "Vinegar", "Olive Oil", "Coconut Oil", "Sesame Oil", "Worcestershire Sauce",
-        
+
         // Pantry
         "Sesame", "Rice", "Pasta", "Beans", "Corn", "Quinoa", "Oats", "Flour", "Sugar",
         "Salt", "Pepper", "Cinnamon", "Nutmeg", "Oregano", "Basil", "Thyme", "Rosemary",
@@ -311,20 +311,20 @@ function InventoryContent() {
 
     const filterItems = (items: string[]) => {
         let filtered = items;
-        
+
         // Filter by category
         if (filterCategory !== "all") {
             filtered = filtered.filter(item => getCategoryForItem(item) === filterCategory);
         }
-        
+
         // Filter by search query
         if (searchQuery.trim()) {
-            filtered = filtered.filter(item => 
+            filtered = filtered.filter(item =>
                 item.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 getCategoryForItem(item).toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
-        
+
         return filtered;
     };
 
@@ -337,12 +337,13 @@ function InventoryContent() {
         .reduce((total, item) => total + item.count, 0);
 
     return (
-        <div className={styles.pageContainer} style={{ 
-          backgroundImage: 'url("/galixy image.webp")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+        <div className={styles.pageContainer} style={{
+            backgroundImage: 'url("/galixy image.webp")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
         }}>
+            <div className={styles.backgroundOverlay}></div>
             <div className={styles.mainContainer}>
 
                 <div className={styles.header}>
@@ -455,7 +456,7 @@ function InventoryContent() {
                     <div className={styles.modalOverlay}>
                         <div className={`${styles.modalContent} ${styles.nearExpiringModal}`}>
                             <div className={styles.modalPadding}>
-                                <div className={styles.flexBetween}>
+                                <div className={`${styles.flexBetween} ${styles.marginBottom6}`}>
                                     <h3 className={styles.nearExpiringHeader}>
                                         <img src="/kfc.jpg" alt="Near Expiring Items" className={`${styles.iconMedium} ${styles.imageInline}`} /> NEAR EXPIRING ITEMS ({nearExpiringCount})
                                     </h3>
@@ -535,7 +536,7 @@ function InventoryContent() {
                     <div className={styles.modalOverlay}>
                         <div className={`${styles.modalContent} ${styles.freshItemsModal}`}>
                             <div className={styles.modalPadding}>
-                                <div className={styles.flexBetween}>
+                                <div className={`${styles.flexBetween} ${styles.marginBottom6}`}>
                                     <h3 className={styles.freshItemsHeader}>
                                         <img src="/kfc.jpg" alt="Fresh Items" className={`${styles.iconMedium} ${styles.imageInline}`} /> FRESH ITEMS ({freshItemsCount})
                                     </h3>
@@ -657,7 +658,8 @@ function InventoryContent() {
                 {expandedAddItem && (
                     <div className={styles.modalOverlay}>
                         <div className={`${styles.modalContent} ${styles.addItemModal}`}>
-                            <div className={styles.padding6}>
+                            {/* Sticky Header */}
+                            <div className={`${styles.padding6} ${styles.stickyHeader}`}>
                                 <div className={`${styles.flexBetween} ${styles.marginBottom6}`}>
                                     <h3 className={styles.addItemHeader}>
                                         <div className={styles.addItemModalIcon}>
@@ -677,6 +679,10 @@ function InventoryContent() {
                                         Close
                                     </button>
                                 </div>
+                            </div>
+
+                            {/* Scrollable Content */}
+                            <div className={`${styles.padding6} ${styles.scrollableContent}`}>
 
                                 <div className={styles.marginBottom4}>
                                     <p className={`text-white ${styles.textCenter}`}>Select items to add to your fridge:</p>
@@ -767,19 +773,19 @@ function InventoryContent() {
                                     </div>
                                 ) : (
                                     // Show items organized by category (with category sorting if sortBy === "category")
-                                    (sortBy === "category" 
+                                    (sortBy === "category"
                                         ? Object.entries(itemsByCategory).sort(([a], [b]) => a.localeCompare(b))
                                         : Object.entries(itemsByCategory)
                                     ).map(([category, items]) => {
                                         const filteredAndSortedItems = sortItems(filterItems(items));
-                                        
+
                                         if (filteredAndSortedItems.length === 0) return null;
-                                        
+
                                         return (
-                                                                                    <div key={category} className={styles.marginBottom8}>
-                                            <h4 className={`text-white font-bold text-xl mb-4 tracking-wide border-b border-white/20 pb-2`}>
-                                                {category} ({filteredAndSortedItems.length})
-                                            </h4>
+                                            <div key={category} className={styles.marginBottom8}>
+                                                <h4 className={`text-white font-bold text-xl mb-4 tracking-wide border-b border-white/20 pb-2`}>
+                                                    {category} ({filteredAndSortedItems.length})
+                                                </h4>
                                                 <div className={`${styles.gridCols2Md3} ${styles.gap4}`}>
                                                     {filteredAndSortedItems.map((item) => {
                                                         const existingItem = inventoryItems.find(invItem => invItem.name === item);
@@ -820,7 +826,7 @@ function InventoryContent() {
                                     })
                                 )}
                             </div>
-                        </div>
+                        </div> {/* Close scrollableContent */}
                     </div>
                 )}
 
