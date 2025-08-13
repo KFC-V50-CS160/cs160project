@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 
 const FloatingNav: React.FC = () => (
-  <nav className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[90%] max-w-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-full shadow-lg py-2 px-4 flex justify-between items-center">
+  <nav className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[90%] max-w-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-full shadow-lg py-2 px-4 flex justify-between items-center z-[9999] pointer-events-auto">
     <NavLink
       to="/recipes"
       className={({ isActive }) =>
