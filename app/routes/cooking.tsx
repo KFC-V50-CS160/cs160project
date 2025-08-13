@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import CookingChat from "../components/CookingChat";
 import "../cooking.css";
@@ -42,6 +42,7 @@ export default function Cooking() {
   const [totalLeftSec, setTotalLeftSec] = useState<number>(0);
   const [stepLeftSec, setStepLeftSec] = useState<number>(0);
   const [lastTick, setLastTick] = useState<number | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   // Function to handle step changes from AI
   const handleStepChange = (stepChange: number) => {
@@ -115,6 +116,19 @@ export default function Cooking() {
     setStepLeftSec(stepDurationSec);
     setLastTick(null);
   };
+
+  // Dynamically size the top offset so steps sit flush beneath header box (no extra gap)
+  useLayoutEffect(() => {
+    const updateOffset = () => {
+      if (headerRef.current) {
+        const h = headerRef.current.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--cooking-header-height', `${h}px`);
+      }
+    };
+    updateOffset();
+    window.addEventListener('resize', updateOffset);
+    return () => window.removeEventListener('resize', updateOffset);
+  }, [recipeTitle, steps.length]);
 
   const fmt = (s: number) => {
     const sec = Math.max(0, Math.floor(s));
@@ -231,6 +245,15 @@ export default function Cooking() {
   // Keyboard controls for skip/rewind
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      // Ignore key events originating from form fields / editable elements
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        const isEditable = target.isContentEditable;
+        if (isEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+          return; // do not interfere with typing
+        }
+      }
       if (["ArrowRight", "ArrowDown", " ", "Spacebar"].includes(e.key)) {
         setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
       } else if (["ArrowLeft", "ArrowUp"].includes(e.key)) {
@@ -267,8 +290,8 @@ export default function Cooking() {
   return (
     <div className="cooking-page">
       <div className="cooking-content">
-    <div className="cooking-header">
-          <div className="header-box">
+  <div className="cooking-header">
+      <div className="header-box" ref={headerRef}>
             <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
             <h1 className="recipe-title" style={{ margin: '0' }}>{recipeTitle}</h1>
             <div className="total-progress-row">

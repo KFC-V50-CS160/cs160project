@@ -3,14 +3,13 @@
 /* Layout & Container Classes */
 .pageContainer {
     min-height: 100vh;
-    background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+    /* Unified darker background (was light gradient) */
+    background: linear-gradient(to bottom right, #111827, #1f2937);
     padding: 1rem;
     padding-bottom: 5rem;
 }
 
-.dark .pageContainer {
-    background: linear-gradient(to bottom right, #111827, #1f2937);
-}
+.dark .pageContainer { background: linear-gradient(to bottom right, #111827, #1f2937); }
 
 .mainContainer {
     max-width: 72rem;

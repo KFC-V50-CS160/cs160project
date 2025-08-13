@@ -590,22 +590,12 @@ export default function Home() {
             style={{ position: 'relative' }}
           >
             <h2 className={styles.llmTitle}>
-              what are we cookin'?
+              Ask Cooking Buddy!
             </h2>
-            <p className={styles.llmSubtitle} style={{ fontSize: '1.25rem', fontWeight: '600' }}>
-              just ask!
-            </p>
-            <span className={styles.llmPlayButton} style={{ 
-              position: 'absolute', 
-              bottom: '16px', 
-              right: '16px',
-              width: '32px',
-              height: '32px'
-            }}>
-              <svg className={styles.llmPlayIcon} fill="currentColor" viewBox={styles.svgViewBox} style={{ width: '16px', height: '16px' }}>
-                <path d={styles.svgPathPlay} />
-              </svg>
-            </span>
+            <div className={styles.llmChatPlaceholder}>
+              <span className="text-lg opacity-80">💬</span>
+              <span>Let's cook!</span>
+            </div>
           </div>
 
           {/* Reminders Section */}
@@ -613,7 +603,7 @@ export default function Home() {
             className={styles.remindersContainer}
             onClick={handleReminderClick}
           >
-            <h2 className={styles.remindersTitle}>reminders</h2>
+            <h2 className={styles.remindersTitle}>Reminders</h2>
             <div className={styles.remindersList}>
               {reminders.length > 0 ? (
                 reminders.map((reminder, index) => (
@@ -626,7 +616,7 @@ export default function Home() {
               ) : (
                 <div className={styles.reminderItem}>
                   <div className={styles.reminderDot}></div>
-                  <span className={styles.reminderName}>All items fresh!</span>
+                  <span className={styles.reminderName}>All Items Fresh!</span>
                   <span className={styles.reminderDays}>✓</span>
                 </div>
               )}
@@ -637,7 +627,7 @@ export default function Home() {
         {/* Recipe Recommendations Section */}
         <div className={styles.recipeSection}>
           <div className={styles.recipeSectionHeader}>
-            <h2 className={styles.recipeSectionTitle}>recipes for you</h2>
+            <h2 className={styles.recipeSectionTitle}>Recipes For You</h2>
             <div className={styles.navigationControls}>
               <button
                 onClick={handleRefreshRecipes}
@@ -739,12 +729,23 @@ export default function Home() {
                 </button>
 
                 <h3 className={styles.recipeTitle}>{recommendations[currentRecipeIndex].title}</h3>
-                <p className={recommendations[currentRecipeIndex].ready ? styles.recipeStatusReady : styles.recipeStatusMissing}>
-                  {recommendations[currentRecipeIndex].status}
-                </p>
-                <p className={styles.recipeInfo}>
-                  {recommendations[currentRecipeIndex].difficulty} • {recommendations[currentRecipeIndex].time}
-                </p>
+                {(() => {
+                  const statusRaw = recommendations[currentRecipeIndex].status || "";
+                  const difficultyRaw = recommendations[currentRecipeIndex].difficulty || "";
+                  const toTitle = (s: string) => s.replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/Item\(S\)/g, 'Item(s)');
+                  const status = toTitle(statusRaw);
+                  const difficulty = toTitle(difficultyRaw);
+                  return (
+                    <>
+                      <p className={recommendations[currentRecipeIndex].ready ? styles.recipeStatusReady : styles.recipeStatusMissing}>
+                        {status}
+                      </p>
+                      <p className={styles.recipeInfo}>
+                        {difficulty} • {recommendations[currentRecipeIndex].time}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
             ) : (
               <div className={styles.emptyState}>
@@ -757,7 +758,7 @@ export default function Home() {
         {/* Saved Recipes Section */}
         <div className={styles.recipeSection}>
           <div className={styles.recipeSectionHeader}>
-            <h2 className={styles.recipeSectionTitle}>saved recipes</h2>
+            <h2 className={styles.recipeSectionTitle}>Saved Recipes</h2>
             <div className={styles.navigationControls}>
               <button
                 onClick={() => navigateSaved('prev')}
@@ -848,6 +849,16 @@ export default function Home() {
                 </button>
 
                 <h3 className={styles.savedRecipeTitle}>{savedRecipes[currentSavedIndex].title}</h3>
+                {(() => {
+                  const statusRaw = savedRecipes[currentSavedIndex].status || "";
+                  const difficultyRaw = savedRecipes[currentSavedIndex].difficulty || "";
+                  const toTitle = (s: string) => s.replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/Item\(S\)/g, 'Item(s)');
+                  const status = toTitle(statusRaw);
+                  const difficulty = toTitle(difficultyRaw);
+                  return (
+                    <p className={styles.recipeInfo}>{difficulty}{status ? ` • ${status}` : ''}</p>
+                  );
+                })()}
               </div>
             ) : (
               <div className={styles.emptyState}>
@@ -869,7 +880,7 @@ export default function Home() {
             onClick={(e) => e.stopPropagation()}
             style={{ maxWidth: aiResponse ? '600px' : '400px', maxHeight: '80vh', overflow: 'auto' }}
           >
-            <h3 className={styles.llmModalTitle}>🍳 AI Cooking Assistant</h3>
+            <h3 className={styles.llmModalTitle}>Hey, I'm Cooking Buddy! 🍳</h3>
             
             {!aiResponse && !aiLoading && (
               <div className={styles.llmModalInputContainer}>
