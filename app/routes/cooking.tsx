@@ -2,7 +2,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import FloatingNav from "../components/FloatingNav";
+import AudioAssistant from "../components/AudioAssistant";
 import "../cooking.css";
+import "../audio-assistant.css";
 
 // Fallback demo instructions (used only if nothing in state or storage)
 const FALLBACK_INSTRUCTIONS = [
@@ -30,25 +32,63 @@ export default function Cooking() {
 
   const [recipeTitle, setRecipeTitle] = useState<string>("Recipe Title");
   const [steps, setSteps] = useState<string[]>(FALLBACK_INSTRUCTIONS);
+  const [stepTimes, setStepTimes] = useState<number[]>([]);
   const [hasSession, setHasSession] = useState(false); // true when a recipe has been chosen before
+  const [stepChangeFlash, setStepChangeFlash] = useState(false);
+
+  // Function to handle step changes from AI
+  const handleStepChange = (stepChange: number) => {
+    if (stepChange !== 0) {
+      setCurrentStep((prev) => {
+        const newStep = prev + stepChange;
+        // Ensure step stays within bounds
+        return Math.max(0, Math.min(newStep, steps.length - 1));
+      });
+
+
+
+      // Brief flash effect to indicate step change
+      setStepChangeFlash(true);
+      setTimeout(() => setStepChangeFlash(false), 500);
+    }
+  };
 
   // On mount decide source of truth: navigation state (fresh) or localStorage (resume)
   useEffect(() => {
     const navState = location.state as any;
     if (navState && Array.isArray(navState.instructions)) {
-      // Prefer freshly passed in data; normalise and persist
-      const normalized = navState.instructions.map((s: any) => s?.instruction || s).filter(Boolean);
-      if (normalized.length > 0) {
-        setSteps(normalized);
+      // Handle both old format (string[]) and new format (Step[])
+      let normalizedSteps: string[] = [];
+      let normalizedTimes: number[] = [];
+
+      if (navState.instructions.length > 0) {
+        const firstItem = navState.instructions[0];
+        if (typeof firstItem === 'string') {
+          // Old format: string[]
+          normalizedSteps = navState.instructions.filter(Boolean);
+          normalizedTimes = new Array(normalizedSteps.length).fill(0);
+        } else if (firstItem && typeof firstItem === 'object' && 'instruction' in firstItem) {
+          // New format: Step[]
+          normalizedSteps = navState.instructions.map((s: any) => s?.instruction || '').filter(Boolean);
+          normalizedTimes = navState.instructions.map((s: any) => s?.time || 0);
+        }
       }
+
+      if (normalizedSteps.length > 0) {
+        setSteps(normalizedSteps);
+        setStepTimes(normalizedTimes);
+      }
+
       if (navState.title) setRecipeTitle(navState.title);
+
       try {
         window.localStorage.setItem(
           STORAGE_KEY,
           JSON.stringify({
             t: Date.now(),
             title: navState.title || "Recipe Title",
-            instructions: normalized.length > 0 ? normalized : FALLBACK_INSTRUCTIONS
+            instructions: navState.instructions,
+            stepTimes: normalizedTimes
           })
         );
       } catch (e) {
@@ -63,7 +103,22 @@ export default function Cooking() {
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.instructions) && parsed.instructions.length) {
-            setSteps(parsed.instructions.map((s: any) => s?.instruction || s));
+            let normalizedSteps: string[] = [];
+            let normalizedTimes: number[] = [];
+
+            if (typeof parsed.instructions[0] === 'string') {
+              // Old format
+              normalizedSteps = parsed.instructions.filter(Boolean);
+              normalizedTimes = parsed.stepTimes || new Array(normalizedSteps.length).fill(0);
+            } else if (parsed.instructions[0] && typeof parsed.instructions[0] === 'object' && 'instruction' in parsed.instructions[0]) {
+              // New format
+              normalizedSteps = parsed.instructions.map((s: any) => s?.instruction || '').filter(Boolean);
+              normalizedTimes = parsed.instructions.map((s: any) => s?.time || 0);
+            }
+
+            setSteps(normalizedSteps);
+            setStepTimes(normalizedTimes);
+
             if (typeof parsed.title === "string" && parsed.title.trim()) {
               setRecipeTitle(parsed.title);
             }
@@ -106,8 +161,8 @@ export default function Cooking() {
   // Keyboard controls for skip/rewind
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-  if (["ArrowRight", "ArrowDown", " ", "Spacebar"].includes(e.key)) {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+      if (["ArrowRight", "ArrowDown", " ", "Spacebar"].includes(e.key)) {
+        setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
       } else if (["ArrowLeft", "ArrowUp"].includes(e.key)) {
         setCurrentStep((prev) => Math.max(prev - 1, 0));
       }
@@ -119,9 +174,6 @@ export default function Cooking() {
   // Button handlers
   const handleSkip = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   const handleRewind = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
-  const handleAsk = () => {
-    alert("Ask me anything!");
-  };
 
   // Only show 5 steps at a time, centered around currentStep
   const visibleCount = 5;
@@ -174,10 +226,13 @@ export default function Cooking() {
                 return (
                   <div
                     key={actualIdx}
-                    className={`lyric-step ${distClass}${actualIdx === currentStep ? " selected" : ""}`}
+                    className={`lyric-step ${distClass}${actualIdx === currentStep ? " selected" : ""}${actualIdx === currentStep && stepChangeFlash ? " step-flash" : ""}`}
                     onClick={() => setCurrentStep(actualIdx)}
                   >
-                    {step}
+                    <span className="step-content">{step}</span>
+                    {stepTimes[actualIdx] > 0 && (
+                      <span className="step-time"> - <em>{stepTimes[actualIdx]} min.</em></span>
+                    )}
                   </div>
                 );
               })}
@@ -186,18 +241,32 @@ export default function Cooking() {
           </div>
         </div>
         <FloatingNav />
+
+
+
         <div className="controls custom-controls-layout controls-above-nav">
           <div className="controls-left">
             <button className="control-btn" onClick={handleRewind} aria-label="Rewind">⏪</button>
           </div>
           <div className="controls-center">
-            <button className="control-btn ask-btn" onClick={handleAsk} aria-label="Ask me anything">
-              <span role="img" aria-label="microphone">🎤</span> Ask me anything
-            </button>
+            <AudioAssistant
+              onStepChange={handleStepChange}
+              recipeContext={{
+                recipeTitle,
+                currentStep,
+                totalSteps: steps.length,
+                steps: steps.map((step, index) => ({
+                  index,
+                  content: step,
+                  rowNumber: index + 1,
+                  time: stepTimes[index] || 0
+                }))
+              }}
+            />
           </div>
-            <div className="controls-right">
-              <button className="control-btn" onClick={handleSkip} aria-label="Skip">⏩</button>
-            </div>
+          <div className="controls-right">
+            <button className="control-btn" onClick={handleSkip} aria-label="Skip">⏩</button>
+          </div>
         </div>
       </div>
     </div>
