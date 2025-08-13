@@ -588,11 +588,20 @@ export default function RecipeDetailPage() {
   }, [hydrated, state, dishName]);
 
   const handleStartCooking = () => {
-    // TODO: route to /recipe/${dishName}/cook
-    // TODO: analytics track start cooking
-    // TODO: i18n
-    // eslint-disable-next-line no-console
-    console.log(`start cooking: ${dishName}`);
+    if (state.status === "success" && state.data) {
+      // Navigate to cooking page with recipe data
+      const recipeData = {
+        title: state.data.title,
+        instructions: state.data.complete_instructions.map(step => ({
+          instruction: step.instruction,
+          time: step.time
+        }))
+      };
+
+      navigate('/cooking', {
+        state: recipeData
+      });
+    }
   };
 
   // 客户端首帧强制与服务端一致：仅渲染骨架屏
