@@ -160,8 +160,8 @@ export function calculateTotalTime(steps: Step[]): number {
 }
 export function inferDifficulty(steps: Step[], totalTime: number): Difficulty {
   const c = Array.isArray(steps) ? steps.length : 0;
-  if (c <= 3 && totalTime <= 30) return "easy";
-  if (c <= 6 && totalTime <= 60) return "medium";
+  if (c <= 6) return "easy";
+  if (c === 7) return "medium";
   return "hard";
 }
 export function generateStatusText(missingCount: number): string {

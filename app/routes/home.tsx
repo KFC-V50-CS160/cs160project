@@ -23,6 +23,9 @@ export default function Home() {
   const { loaded } = useInventory(); // 新增
   const [llmQuery, setLlmQuery] = useState("");
   const [showLlmModal, setShowLlmModal] = useState(false);
+  const [aiResponse, setAiResponse] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
   const [currentRecipeIndex, setCurrentRecipeIndex] = useState(0);
   const [currentSavedIndex, setCurrentSavedIndex] = useState(0);
   const [recipeAnimating, setRecipeAnimating] = useState(false);
@@ -39,6 +42,17 @@ export default function Home() {
       days: item.expiresIn.replace(/\s*days?/i, '').replace(/\s*day/i, '') || '1'
     }))
     .slice(0, 3); // Show max 3 reminders
+
+  // Get all near-expiring items for the reminder modal (up to 10 items)
+  const allExpiringItems = inventoryItems
+    .filter(item => item.status === "near-expiring")
+    .map(item => ({
+      name: item.name,
+      daysLeft: item.expiresIn.replace(/\s*days?/i, '').replace(/\s*day/i, '') || '1',
+      count: item.count || 1,
+      category: item.category
+    }))
+    .slice(0, 10); // Show up to 10 items in modal
 
   // Real API data for recipe recommendations
   const [recommendations, setRecommendations] = useState<RecipeCardData[]>([]);
@@ -81,19 +95,213 @@ export default function Home() {
     }, 150); // Fade out duration
   };
 
-  // Handle LLM modal
-  const handleLlmSubmit = () => {
-    if (llmQuery.trim()) {
-      console.log("LLM Query:", llmQuery);
-      // Here you would typically send the query to your LLM service
-      setLlmQuery("");
-      setShowLlmModal(false);
+  // Handle AI Assistant API call
+  const handleLlmSubmit = async () => {
+    if (!llmQuery.trim()) return;
+    
+    setAiLoading(true);
+    setAiResponse("");
+    
+    try {
+      console.log("[Home] AI Query:", llmQuery);
+      
+      const response = await fetch('https://noggin.rea.gent/square-hamster-3060', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer rg_v1_2n7irt6igmzjsbbhtosxmah9m7ud311qp89j_ngk',
+        },
+        body: JSON.stringify({
+          question: llmQuery,
+        }),
+      });
+
+      const responseText = await response.text();
+      
+      if (!response.ok) {
+        throw new Error(`AI API error: ${response.status} ${response.statusText}`);
+      }
+      
+      setAiResponse(responseText);
+      console.log("[Home] AI Response:", responseText);
+      
+    } catch (error) {
+      console.error("[Home] AI API failed:", error);
+      setAiResponse("Sorry, I'm having trouble connecting right now. Please try again later.");
+    } finally {
+      setAiLoading(false);
     }
   };
 
   const handleReminderClick = () => {
-    console.log("[Home] Navigate to /inventory");
+    console.log("[Home] Open reminder modal");
+    setShowReminderModal(true);
+  };
+
+  const handleCloseReminderModal = () => {
+    setShowReminderModal(false);
+  };
+
+  const handleGoToFridge = () => {
+    console.log("[Home] Navigate to /inventory from reminder modal");
+    setShowReminderModal(false);
     navigate('/inventory');
+  };
+
+  // Close modal and reset states
+  const handleCloseModal = () => {
+    setShowLlmModal(false);
+    setLlmQuery("");
+    setAiResponse("");
+    setAiLoading(false);
+  };
+
+  // Start a new conversation
+  const handleNewConversation = () => {
+    setLlmQuery("");
+    setAiResponse("");
+    setAiLoading(false);
+  };
+
+  // Enhanced markdown parser for AI responses
+  const renderMarkdownResponse = (text: string) => {
+    if (!text) return null;
+    
+    // Split text into lines to handle line breaks and blocks properly
+    const lines = text.split('\n');
+    const elements: (string | React.ReactElement)[] = [];
+    let inCodeBlock = false;
+    let codeBlockContent: string[] = [];
+    let codeBlockStartIndex = 0;
+    
+    lines.forEach((line, lineIndex) => {
+      // Handle code blocks
+      if (line.trim().startsWith('```')) {
+        if (!inCodeBlock) {
+          // Start of code block
+          inCodeBlock = true;
+          codeBlockContent = [];
+          codeBlockStartIndex = lineIndex;
+          return;
+        } else {
+          // End of code block
+          inCodeBlock = false;
+          if (elements.length > 0) {
+            elements.push(<br key={`br-before-code-${lineIndex}`} />);
+          }
+          elements.push(
+            <pre key={`codeblock-${codeBlockStartIndex}`} className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-3 my-2 overflow-x-auto">
+              <code className="text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre">
+                {codeBlockContent.join('\n')}
+              </code>
+            </pre>
+          );
+          return;
+        }
+      }
+      
+      if (inCodeBlock) {
+        codeBlockContent.push(line);
+        return;
+      }
+      
+      // Handle list items
+      if (line.trim().startsWith('- ')) {
+        if (lineIndex > 0) {
+          elements.push(<br key={`br-${lineIndex}`} />);
+        }
+        const listContent = line.trim().substring(2); // Remove "- "
+        const processedListContent = parseInlineMarkdown(listContent, lineIndex);
+        elements.push(
+          <div key={`list-${lineIndex}`} className="flex items-start gap-2 my-1">
+            <span className="text-gray-600 dark:text-gray-400 mt-0.5">•</span>
+            <span>{processedListContent}</span>
+          </div>
+        );
+        return;
+      }
+      
+      // Handle regular lines
+      if (lineIndex > 0 && !line.trim().startsWith('- ')) {
+        elements.push(<br key={`br-${lineIndex}`} />);
+      }
+      
+      // Parse inline markdown for regular lines
+      const processedLine = parseInlineMarkdown(line, lineIndex);
+      if (Array.isArray(processedLine) && processedLine.length > 0) {
+        elements.push(...processedLine);
+      } else if (line.trim()) {
+        elements.push(line);
+      }
+    });
+    
+    return elements.length > 0 ? elements : text;
+  };
+
+  // Helper function to parse inline markdown (bold, italic, code, links)
+  const parseInlineMarkdown = (text: string, lineIndex: number) => {
+    const lineElements: (string | React.ReactElement)[] = [];
+    let lastIndex = 0;
+    
+    // Combined regex for inline markdown patterns
+    const combinedRegex = /(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(`([^`]+)`)|(\[([^\]]+)\]\(([^)]+)\))/g;
+    let match;
+    
+    while ((match = combinedRegex.exec(text)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        lineElements.push(text.substring(lastIndex, match.index));
+      }
+      
+      if (match[1]) {
+        // Bold text: **text**
+        lineElements.push(
+          <strong key={`bold-${lineIndex}-${match.index}`} className="font-bold">
+            {match[2]}
+          </strong>
+        );
+      } else if (match[3]) {
+        // Italic text: *text*
+        lineElements.push(
+          <em key={`italic-${lineIndex}-${match.index}`} className="italic">
+            {match[4]}
+          </em>
+        );
+      } else if (match[5]) {
+        // Code text: `code`
+        lineElements.push(
+          <code key={`code-${lineIndex}-${match.index}`} className="bg-gray-200 dark:bg-gray-600 px-1 py-0.5 rounded text-sm font-mono">
+            {match[6]}
+          </code>
+        );
+      } else if (match[7]) {
+        // Links: [text](url)
+        const linkText = match[8];
+        const linkUrl = match[9];
+        lineElements.push(
+          <button
+            key={`link-${lineIndex}-${match.index}`}
+            onClick={() => {
+              console.log("[Home] AI link click:", linkUrl);
+              navigate(linkUrl);
+              handleCloseModal();
+            }}
+            className="text-blue-500 hover:text-blue-700 underline bg-transparent border-none cursor-pointer font-medium"
+          >
+            {linkText}
+          </button>
+        );
+      }
+      
+      lastIndex = combinedRegex.lastIndex;
+    }
+    
+    // Add remaining text in the line
+    if (lastIndex < text.length) {
+      lineElements.push(text.substring(lastIndex));
+    }
+    
+    return lineElements.length > 0 ? lineElements : text;
   };
 
   const reloadingRef = useRef(false);
@@ -329,18 +537,25 @@ export default function Home() {
           <div
             className={styles.llmContainer}
             onClick={() => setShowLlmModal(true)}
+            style={{ position: 'relative' }}
           >
             <h2 className={styles.llmTitle}>
               what are we cookin'?
             </h2>
-            <p className={styles.llmSubtitle}>
+            <p className={styles.llmSubtitle} style={{ fontSize: '1.25rem', fontWeight: '600' }}>
               just ask!
-              <span className={styles.llmPlayButton}>
-                <svg className={styles.llmPlayIcon} fill="currentColor" viewBox={styles.svgViewBox}>
-                  <path d={styles.svgPathPlay} />
-                </svg>
-              </span>
             </p>
+            <span className={styles.llmPlayButton} style={{ 
+              position: 'absolute', 
+              bottom: '16px', 
+              right: '16px',
+              width: '32px',
+              height: '32px'
+            }}>
+              <svg className={styles.llmPlayIcon} fill="currentColor" viewBox={styles.svgViewBox} style={{ width: '16px', height: '16px' }}>
+                <path d={styles.svgPathPlay} />
+              </svg>
+            </span>
           </div>
 
           {/* Reminders Section */}
@@ -593,38 +808,154 @@ export default function Home() {
         </div>
       </div>
 
-      {/* LLM Query Modal */}
+      {/* AI Assistant Modal */}
       {showLlmModal && (
         <div
           className={styles.llmModalOverlay}
-          onClick={() => setShowLlmModal(false)}
+          onClick={handleCloseModal}
         >
           <div
             className={styles.llmModalContent}
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: aiResponse ? '600px' : '400px', maxHeight: '80vh', overflow: 'auto' }}
           >
-            <h3 className={styles.llmModalTitle}>What are we cookin' today?</h3>
-            <div className={styles.llmModalInputContainer}>
-              <input
-                type="text"
-                value={llmQuery}
-                onChange={(e) => setLlmQuery(e.target.value)}
-                placeholder="Ask me anything about cooking..."
-                className={styles.llmModalInput}
-                autoFocus
-              />
+            <h3 className={styles.llmModalTitle}>🍳 AI Cooking Assistant</h3>
+            
+            {!aiResponse && !aiLoading && (
+              <div className={styles.llmModalInputContainer}>
+                <input
+                  type="text"
+                  value={llmQuery}
+                  onChange={(e) => setLlmQuery(e.target.value)}
+                  placeholder="Ask me anything about cooking..."
+                  className={styles.llmModalInput}
+                  autoFocus
+                  onKeyPress={(e) => e.key === 'Enter' && handleLlmSubmit()}
+                />
+                <div className={styles.llmModalButtonContainer}>
+                  <button
+                    onClick={handleCloseModal}
+                    className={styles.llmModalCancelButton}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleLlmSubmit}
+                    className={styles.llmModalButton}
+                    disabled={!llmQuery.trim()}
+                  >
+                    Ask
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {aiLoading && (
+              <div className="flex flex-col items-center gap-4 py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <p className="text-gray-600 dark:text-gray-300">Thinking...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">"{llmQuery}"</p>
+              </div>
+            )}
+
+            {aiResponse && (
+              <div className="space-y-4">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border-l-4 border-blue-500">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Your question:</p>
+                  <p className="text-gray-800 dark:text-white">{llmQuery}</p>
+                </div>
+                
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-2">AI Assistant:</p>
+                  <div className="text-gray-800 dark:text-white whitespace-pre-wrap leading-relaxed">
+                    {renderMarkdownResponse(aiResponse)}
+                  </div>
+                </div>
+
+                <div className={styles.llmModalButtonContainer}>
+                  <button
+                    onClick={handleCloseModal}
+                    className={styles.llmModalCancelButton}
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleNewConversation}
+                    className={styles.llmModalButton}
+                  >
+                    Ask Another Question
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reminder Modal */}
+      {showReminderModal && (
+        <div
+          className={styles.llmModalOverlay}
+          onClick={handleCloseReminderModal}
+        >
+          <div
+            className={styles.llmModalContent}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '500px', maxHeight: '70vh', overflow: 'auto' }}
+          >
+            <h3 className={styles.llmModalTitle}>🕒 Expiring Soon</h3>
+            
+            <div className="space-y-4">
+              <p className="text-gray-600 dark:text-gray-300 text-center text-sm">
+                These items in your fridge are expiring soon. Consider using them in your next meal!
+              </p>
+              
+              {allExpiringItems.length > 0 ? (
+                <div className="space-y-3">
+                  {allExpiringItems.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-white">
+                            {item.name}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                            {item.count} {item.count === 1 ? 'item' : 'items'} • {item.category}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+                          {item.daysLeft} day{item.daysLeft !== '1' ? 's' : ''} left
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                    <span className="text-2xl">✅</span>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Great! No items are expiring soon.
+                  </p>
+                </div>
+              )}
+
               <div className={styles.llmModalButtonContainer}>
                 <button
-                  onClick={() => setShowLlmModal(false)}
+                  onClick={handleCloseReminderModal}
                   className={styles.llmModalCancelButton}
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleLlmSubmit}
+                  onClick={handleGoToFridge}
                   className={styles.llmModalButton}
                 >
-                  Ask
+                  Go to the Fridge
                 </button>
               </div>
             </div>

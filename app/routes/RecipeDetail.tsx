@@ -305,8 +305,8 @@ function HeroCard(props: {
 }) {
   const { title, isFavorite, onToggleFavorite, onStartCooking, estimatedTime, imageUrl } = props;
   const favBtnClass = isFavorite
-    ? `${styles.heartBtn} bg-rose-600 text-white border-rose-600`
-    : `${styles.heartBtn} text-rose-600 border-rose-300`;
+    ? `${styles.heartBtn} bg-white/90 hover:bg-white text-red-500 border-gray-200`
+    : `${styles.heartBtn} bg-white/90 hover:bg-white text-gray-400 border-gray-200`;
 
   return (
     <div className={styles.hero}>
@@ -329,7 +329,14 @@ function HeroCard(props: {
             className={favBtnClass}
             data-testid="favorite-btn"
           >
-            <span aria-hidden="true">❤</span>
+            <svg 
+              className="w-5 h-5" 
+              fill={isFavorite ? "currentColor" : "none"} 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
           </button>
           {typeof estimatedTime === "number" && (
             <span
@@ -500,7 +507,7 @@ export default function RecipeDetailPage() {
     return null;
   }, [state]);
 
-  // 首帧“同构骨架”
+  // 首帧"同构骨架"
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     setHydrated(true);
@@ -510,6 +517,43 @@ export default function RecipeDetailPage() {
     if (state.status === "success" && state.data?.title) return state.data.title;
     return dishName || "Data unavailable";
   }, [state, dishName]);
+
+  // Load and save favorites - synced with recipes page
+  useEffect(() => {
+    if (!hydrated || !title || title === "Data unavailable") return;
+    
+    try {
+      const savedFavorites = localStorage.getItem("magicfridge_favorites");
+      if (savedFavorites) {
+        const favoritesSet = new Set(JSON.parse(savedFavorites));
+        setIsFavorite(favoritesSet.has(title));
+      }
+    } catch (e) {
+      console.warn("Failed to load favorites:", e);
+    }
+  }, [hydrated, title]);
+
+  const toggleFavorite = () => {
+    if (!title || title === "Data unavailable") return;
+    
+    try {
+      const savedFavorites = localStorage.getItem("magicfridge_favorites");
+      const favoritesSet = savedFavorites ? new Set(JSON.parse(savedFavorites)) : new Set();
+      
+      if (favoritesSet.has(title)) {
+        favoritesSet.delete(title);
+        setIsFavorite(false);
+      } else {
+        favoritesSet.add(title);
+        setIsFavorite(true);
+      }
+      
+      localStorage.setItem("magicfridge_favorites", JSON.stringify(Array.from(favoritesSet)));
+      console.log("[RecipeDetail] Toggle favorite:", title, !isFavorite);
+    } catch (e) {
+      console.warn("Failed to save favorites:", e);
+    }
+  };
 
   // 根据 recipeName 生成封面图（带缓存）
   useEffect(() => {
@@ -639,7 +683,7 @@ export default function RecipeDetailPage() {
               <HeroCard
                 title={state.status === "success" ? state.data?.title : undefined}
                 isFavorite={isFavorite}
-                onToggleFavorite={() => setIsFavorite((v) => !v)}
+                onToggleFavorite={toggleFavorite}
                 onStartCooking={handleStartCooking}
                 estimatedTime={estimatedTime || undefined}
                 imageUrl={heroUrl || undefined} // 传入生成的图片

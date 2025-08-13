@@ -234,6 +234,7 @@ export default function Recipes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAttribute, setFilterAttribute] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   
   // Favorites management
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -373,14 +374,14 @@ export default function Recipes() {
     };
   }, [recipes]);
 
-  // Toggle favorite
-  const toggleFavorite = (recipeId: string) => {
-    console.log("[Recipes] Toggle favorite:", recipeId);
+  // Toggle favorite (use title as identifier for consistency with detail page)
+  const toggleFavorite = (recipeTitle: string) => {
+    console.log("[Recipes] Toggle favorite:", recipeTitle);
     const newFavorites = new Set(favorites);
-    if (newFavorites.has(recipeId)) {
-      newFavorites.delete(recipeId);
+    if (newFavorites.has(recipeTitle)) {
+      newFavorites.delete(recipeTitle);
     } else {
-      newFavorites.add(recipeId);
+      newFavorites.add(recipeTitle);
     }
     setFavorites(newFavorites);
     saveFavorites(newFavorites);
@@ -396,7 +397,7 @@ export default function Recipes() {
       const matchesFilter = filterAttribute === "all" || 
                            (filterAttribute === "ready" && recipe.ready) ||
                            (filterAttribute === "missing" && !recipe.ready) ||
-                           (filterAttribute === "favorites" && favorites.has(recipe.id)) ||
+                           (filterAttribute === "favorites" && favorites.has(recipe.title)) ||
                            (filterAttribute === recipe.difficulty);
       
       return matchesSearch && matchesFilter;
@@ -405,24 +406,31 @@ export default function Recipes() {
 
     // Sort recipes
     filtered.sort((a, b) => {
+      let result = 0;
       switch (sortBy) {
         case "rating":
-          return b.rating - a.rating;
+          result = a.rating - b.rating; // 统一为从低到高的基础排序
+          break;
         case "time":
-          return a.estimatedTime - b.estimatedTime;
+          result = a.estimatedTime - b.estimatedTime; // 从短到长
+          break;
         case "difficulty":
           const difficultyOrder = { easy: 1, medium: 2, hard: 3 };
-          return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+          result = difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]; // 从易到难
+          break;
         case "title":
-          return a.title.localeCompare(b.title);
+          result = a.title.localeCompare(b.title); // 字母顺序
+          break;
         default:
           return 0;
       }
+      // 根据排序方向调整结果
+      return sortDirection === "desc" ? -result : result;
     });
 
-    console.log("[Recipes] Filter/sort:", { before, afterFilter, sortBy, filterAttribute, searchTermLen: searchTerm.length });
+    console.log("[Recipes] Filter/sort:", { before, afterFilter, sortBy, sortDirection, filterAttribute, searchTermLen: searchTerm.length });
     return filtered;
-  }, [recipes, searchTerm, filterAttribute, sortBy, favorites]);
+  }, [recipes, searchTerm, filterAttribute, sortBy, sortDirection, favorites]);
 
   // 跳转详情：携带与组合键一致的 prefs/dishes（与 Home 一致）
   const mirrorDetailCacheBeforeNavigate = (title: string) => {
@@ -500,28 +508,7 @@ export default function Recipes() {
             />
           </div>
           
-          <div className="flex gap-2">
-            {/* Refresh Button (与 Home 一致) */}
-            <button
-              onClick={handleRefreshRecipes}
-              className={`px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={refreshing || !loaded}
-              title="refresh recipes"
-            >
-              <svg className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          
-          {/* Generate Recipe Button */}
-          <button
-            onClick={handleGenerateRecipe}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-            title={getCurrentPlateIngredients().length > 0 ? `Generate recipe using: ${getCurrentPlateIngredients().join(', ')}` : 'No ingredients on plate'}
-          >
-            Generate Recipe {getCurrentPlateIngredients().length > 0 && `(${getCurrentPlateIngredients().length} ingredients)`}
-          </button>
-          </div>
+
         </div>
 
         {/* Filter section - inline layout */}
@@ -545,16 +532,31 @@ export default function Recipes() {
           
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Sort by</label>
-            <select 
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className={styles.filterSelect}
-            >
-              <option value="rating">Rating</option>
-              <option value="time">Time</option>
-              <option value="difficulty">Difficulty</option>
-              <option value="title">Name</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className={styles.filterSelect}
+              >
+                <option value="rating">Rating</option>
+                <option value="time">Time</option>
+                <option value="difficulty">Difficulty</option>
+                <option value="title">Name</option>
+              </select>
+              <button
+                onClick={() => setSortDirection(prev => prev === "asc" ? "desc" : "asc")}
+                className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                title={`Currently: ${sortDirection === "desc" ? "High to Low" : "Low to High"}. Click to toggle.`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {sortDirection === "desc" ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -603,13 +605,13 @@ export default function Recipes() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleFavorite(recipe.id);
+                      toggleFavorite(recipe.title);
                     }}
                     className={styles.favoriteButton}
                   >
                     <svg 
-                      className={favorites.has(recipe.id) ? styles.favoriteIconActive : styles.favoriteIconInactive} 
-                      fill={favorites.has(recipe.id) ? "currentColor" : "none"} 
+                      className={favorites.has(recipe.title) ? styles.favoriteIconActive : styles.favoriteIconInactive} 
+                      fill={favorites.has(recipe.title) ? "currentColor" : "none"} 
                       stroke="currentColor" 
                       viewBox={styles.svgViewBox}
                     >
@@ -630,11 +632,11 @@ export default function Recipes() {
                         Everything Ready
                       </span>
                     ) : (
-                      <span className={styles.recipeStatusMissing}>
+                      <span className={styles.recipeStatusMissing} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <svg className={styles.statusIcon + " " + styles.statusIconMissing} fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
-                        Missing {recipe.missingItems || 1} item(s)
+                        <span>Missing {recipe.missingItems || 1} item(s)</span>
                       </span>
                     )}
                   </div>
