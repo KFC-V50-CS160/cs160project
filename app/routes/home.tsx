@@ -10,7 +10,7 @@ import {
 } from "../services/recipeApi";
 import { useInventory } from "../services/inventoryContext"; // 新增：读取库存加载状态
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "MagicFridge - Home" },
     { name: "description", content: "Your AI-powered cooking assistant" },
@@ -28,12 +28,17 @@ export default function Home() {
   const [recipeAnimating, setRecipeAnimating] = useState(false);
   const [savedAnimating, setSavedAnimating] = useState(false);
 
-  // Mock data for reminders (with days)
-  const reminders = [
-    { item: "chicken", days: "2" },
-    { item: "broccoli", days: "3" },
-    { item: "ginger", days: "4" },
-  ];
+  // Get real inventory data for reminders
+  const { inventoryItems } = useInventory();
+
+  // Filter items that are near expiring and create reminders
+  const reminders = inventoryItems
+    .filter(item => item.status === "near-expiring")
+    .map(item => ({
+      item: item.name,
+      days: item.expiresIn.replace(/\s*days?/i, '').replace(/\s*day/i, '') || '1'
+    }))
+    .slice(0, 3); // Show max 3 reminders
 
   // Real API data for recipe recommendations
   const [recommendations, setRecommendations] = useState<RecipeCardData[]>([]);
@@ -41,8 +46,7 @@ export default function Home() {
   const [recipesLoading, setRecipesLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Mock inventory data (later this should come from inventory state)
-  const mockInventoryItems = ["chicken", "broccoli", "ginger", "rice", "soy sauce"];
+
 
   // Navigation functions for recipes with animation
   const navigateRecipe = (direction: 'prev' | 'next') => {
@@ -317,12 +321,12 @@ export default function Home() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.mainContainer}>
-        
+
         {/* Top Row: LLM Query and Reminders */}
         <div className={styles.topRowGrid}>
-          
+
           {/* LLM Query Section */}
-          <div 
+          <div
             className={styles.llmContainer}
             onClick={() => setShowLlmModal(true)}
           >
@@ -330,29 +334,37 @@ export default function Home() {
               what are we cookin'?
             </h2>
             <p className={styles.llmSubtitle}>
-              just ask! 
+              just ask!
               <span className={styles.llmPlayButton}>
                 <svg className={styles.llmPlayIcon} fill="currentColor" viewBox={styles.svgViewBox}>
-                  <path d={styles.svgPathPlay}/>
+                  <path d={styles.svgPathPlay} />
                 </svg>
               </span>
             </p>
           </div>
 
           {/* Reminders Section */}
-          <div 
+          <div
             className={styles.remindersContainer}
             onClick={handleReminderClick}
           >
             <h2 className={styles.remindersTitle}>reminders</h2>
             <div className={styles.remindersList}>
-              {reminders.map((reminder, index) => (
-                <div key={index} className={styles.reminderItem}>
+              {reminders.length > 0 ? (
+                reminders.map((reminder, index) => (
+                  <div key={index} className={styles.reminderItem}>
+                    <div className={styles.reminderDot}></div>
+                    <span className={styles.reminderName}>{reminder.item}</span>
+                    <span className={styles.reminderDays}>{reminder.days}d</span>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.reminderItem}>
                   <div className={styles.reminderDot}></div>
-                  <span className={styles.reminderName}>{reminder.item}</span>
-                  <span className={styles.reminderDays}>{reminder.days}d</span>
+                  <span className={styles.reminderName}>All items fresh!</span>
+                  <span className={styles.reminderDays}>✓</span>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -392,7 +404,7 @@ export default function Home() {
               </button>
             </div>
           </div>
-          
+
           <div className={styles.recipeDisplayContainer}>
             {recipesLoading ? (
               <div className={styles.loadingContainer}>
@@ -400,7 +412,7 @@ export default function Home() {
                 <span className={styles.loadingText}>Loading recipes...</span>
               </div>
             ) : recommendations.length > 0 ? (
-              <div 
+              <div
                 className={`${styles.recipeCard} ${recipeAnimating ? styles.recipeCardAnimating : ''}`}
                 onClick={() => {
                   const title = recommendations[currentRecipeIndex].title;
@@ -428,8 +440,8 @@ export default function Home() {
                   }}
                 >
                   {recommendations[currentRecipeIndex].imageUrl ? (
-                    <img 
-                      src={recommendations[currentRecipeIndex].imageUrl} 
+                    <img
+                      src={recommendations[currentRecipeIndex].imageUrl}
                       alt={recommendations[currentRecipeIndex].title}
                       className={styles.recipeImage}
                       style={{
@@ -457,10 +469,10 @@ export default function Home() {
                 </div>
                 <button className={styles.recipeFavoriteButton}>
                   <svg className={styles.recipeFavoriteIcon} fill="currentColor" viewBox={styles.svgViewBox}>
-                    <path d={styles.svgPathHeart}/>
+                    <path d={styles.svgPathHeart} />
                   </svg>
                 </button>
-                
+
                 <h3 className={styles.recipeTitle}>{recommendations[currentRecipeIndex].title}</h3>
                 <p className={recommendations[currentRecipeIndex].ready ? styles.recipeStatusReady : styles.recipeStatusMissing}>
                   {recommendations[currentRecipeIndex].status}
@@ -502,7 +514,7 @@ export default function Home() {
               </button>
             </div>
           </div>
-          
+
           <div className={styles.recipeDisplayContainer}>
             {recipesLoading ? (
               <div className={styles.loadingContainer}>
@@ -510,7 +522,7 @@ export default function Home() {
                 <span className={styles.loadingText}>Loading saved recipes...</span>
               </div>
             ) : savedRecipes.length > 0 ? (
-              <div 
+              <div
                 className={`${styles.savedRecipeCard} ${savedAnimating ? styles.savedRecipeCardAnimating : ''}`}
                 onClick={() => {
                   const title = savedRecipes[currentSavedIndex].title;
@@ -538,8 +550,8 @@ export default function Home() {
                   }}
                 >
                   {savedRecipes[currentSavedIndex].imageUrl ? (
-                    <img 
-                      src={savedRecipes[currentSavedIndex].imageUrl} 
+                    <img
+                      src={savedRecipes[currentSavedIndex].imageUrl}
                       alt={savedRecipes[currentSavedIndex].title}
                       className={styles.savedRecipeImage}
                       style={{
@@ -566,10 +578,10 @@ export default function Home() {
                 </div>
                 <button className={styles.savedRecipeFavoriteButton}>
                   <svg className={styles.savedRecipeFavoriteIcon} fill="currentColor" viewBox={styles.svgViewBox}>
-                    <path d={styles.svgPathHeart}/>
+                    <path d={styles.svgPathHeart} />
                   </svg>
                 </button>
-                
+
                 <h3 className={styles.savedRecipeTitle}>{savedRecipes[currentSavedIndex].title}</h3>
               </div>
             ) : (
@@ -583,11 +595,11 @@ export default function Home() {
 
       {/* LLM Query Modal */}
       {showLlmModal && (
-        <div 
+        <div
           className={styles.llmModalOverlay}
           onClick={() => setShowLlmModal(false)}
         >
-          <div 
+          <div
             className={styles.llmModalContent}
             onClick={(e) => e.stopPropagation()}
           >
@@ -602,13 +614,13 @@ export default function Home() {
                 autoFocus
               />
               <div className={styles.llmModalButtonContainer}>
-                <button 
+                <button
                   onClick={() => setShowLlmModal(false)}
                   className={styles.llmModalCancelButton}
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleLlmSubmit}
                   className={styles.llmModalButton}
                 >
