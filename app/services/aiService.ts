@@ -70,8 +70,8 @@ export class AIService {
 
     constructor() {
         this.questions = COOKING_QUESTIONS;
-        this.nogginUrl = 'https://noggin.rea.gent/extra-snail-7006';
-        this.nogginToken = 'rg_v1_gjkt17b9hkufv88oqw5443wcya6qbmtqs7kt_ngk';
+        this.nogginUrl = 'https://noggin.rea.gent/ytterbic-salmon-8455';
+        this.nogginToken = 'rg_v1_dpssk9fzt3us0r5u2bfd4gfm0y2jid6pjq2f_ngk';
     }
 
     async processQuestion(userInput: string, recipeContext?: RecipeContext): Promise<NogginResponse> {
@@ -140,7 +140,7 @@ export class AIService {
         // Format recipe details for Noggin
         let recipeDetails = '';
         if (recipeContext) {
-            recipeDetails = `Recipe: ${recipeContext.recipeTitle}\nCurrent step: ${recipeContext.currentStep + 1}\nTotal steps: ${recipeContext.totalSteps}\n\nSteps:\n${recipeContext.steps.map((step, index) => `Row ${step.rowNumber}: ${step.content}`).join('\n')}`;
+            recipeDetails = `Recipe: ${recipeContext.recipeTitle}\nTotal steps: ${recipeContext.totalSteps}\n\nSteps:\n${recipeContext.steps.map((step, index) => `Row ${step.rowNumber}: ${step.content}`).join('\n')}`;
         }
 
         const response = await fetch(this.nogginUrl, {
@@ -150,8 +150,8 @@ export class AIService {
                 'Authorization': `Bearer ${this.nogginToken}`,
             },
             body: JSON.stringify({
-                userprompt: userInput,
                 recipedetail: recipeDetails,
+                userprompt: userInput,
                 currentstep: recipeContext ? recipeContext.currentStep + 1 : 1,
             }),
         });
@@ -168,7 +168,7 @@ export class AIService {
         return {
             response: responseText,
             stepChange: stepChange
-        };
+        }
     }
 
     private extractStepCount(input: string): number {
