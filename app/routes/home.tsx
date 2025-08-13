@@ -7,6 +7,7 @@ import {
   getCachedSavedRecipes,
   type RecipeCardData,
   getUserDishesFromInventory,
+  fetchMultipleRecipes, // 新增：单菜名取卡片
 } from "../services/recipeApi";
 import { useInventory } from "../services/inventoryContext"; // 新增：读取库存加载状态
 
@@ -46,7 +47,23 @@ export default function Home() {
   const [recipesLoading, setRecipesLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-
+  // 与服务层一致的候选菜名池（用于追加新推荐）
+  const POSSIBLE_DISHES = [
+    "Chicken Stir Fry", "Vegetable Soup", "Pasta Carbonara", "Fried Rice", "Grilled Salmon",
+    "Beef Noodle Soup", "Fish Tacos", "Mushroom Risotto", "Pork Dumplings", "Tofu Curry",
+    "Shrimp Tempura", "Chicken Tikka", "Vegetable Curry", "Beef Stew", "Fish and Chips",
+    "Pork Chops", "Chicken Wings", "Veggie Burger", "Salmon Teriyaki", "Beef Tacos",
+    "Vegetable Stir Fry", "Chicken Caesar Salad", "Pasta Primavera", "Shrimp Scampi",
+    "Stuffed Peppers", "Egg Fried Rice", "Lemon Chicken", "Spaghetti Bolognese",
+    "Roast Duck", "Mapo Tofu", "Clam Chowder", "Chicken Alfredo", "Eggplant Parmesan",
+    "Greek Salad", "Lasagna", "Chicken Parmesan", "Pad Thai", "Falafel Wrap", "BBQ Ribs"
+  ];
+  const RANDOM_DISHES_KEY = "magicfridge_random_dishes";
+  const pickNewDish = (exclude: Set<string>) => {
+    const candidates = POSSIBLE_DISHES.filter(n => !exclude.has(n));
+    const pool = candidates.length > 0 ? candidates : POSSIBLE_DISHES;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
 
   // Navigation functions for recipes with animation
   const navigateRecipe = (direction: 'prev' | 'next') => {
@@ -166,7 +183,40 @@ export default function Home() {
     if (!loaded || reloadingRef.current || refreshing) return;
     setRefreshing(true);
     try {
-      await reloadByComboCache();
+      const existing = new Set(recommendations.map(r => r.title));
+      const newName = pickNewDish(existing);
+      const dishes = getUserDishesFromInventory();
+      const [card] = await fetchMultipleRecipes([newName], "", dishes);
+
+      if (card) {
+        setRecommendations(prev => {
+          // 如已存在则替换，否则追加
+          const idx = prev.findIndex(r => r.title === card.title);
+          const next = idx >= 0 ? prev.map((r, i) => (i === idx ? card : r)) : [...prev, card];
+          // 将当前展示切到新卡片（队尾或替换位置）
+          const showIdx = idx >= 0 ? idx : next.length - 1;
+          setCurrentRecipeIndex(showIdx);
+          return next;
+        });
+
+        // 更新持久化的随机菜名列表
+        try {
+          const raw = localStorage.getItem(RANDOM_DISHES_KEY);
+          const arr = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(arr)) {
+            if (!arr.includes(newName)) {
+              arr.push(newName);
+              localStorage.setItem(RANDOM_DISHES_KEY, JSON.stringify(arr));
+            }
+          } else {
+            localStorage.setItem(RANDOM_DISHES_KEY, JSON.stringify([newName]));
+          }
+        } catch (e) {
+          console.warn("[Home] persist random dishes failed:", e);
+        }
+      }
+    } catch (e) {
+      console.error("[Home] add-one recommendation failed", e);
     } finally {
       setRefreshing(false);
     }
