@@ -1,7 +1,6 @@
 import type { Route } from "./+types/recipes";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { styles } from "./recipes.styles";
 import "./recipes.css";
 import { fetchMultipleRecipes, type RecipeCardData } from "../services/recipeApi";
@@ -106,33 +105,26 @@ export default function Recipes() {
   // Load recipes data from real API
   useEffect(() => {
     const loadRecipes = async () => {
+      console.groupCollapsed("[Recipes] Load START");
       setLoading(true);
       setError(null);
-      
       try {
         // Try to load from cache first
         const cached = readRecipesCache();
         if (cached) {
-          console.log("Loading recipes from cache");
+          console.log("[Recipes] Cache HIT. Count:", cached.length);
           setRecipes(cached);
-          setLoading(false);
           return;
         }
-        
-        console.log("Fetching recipes from API");
-        
-        // Fetch real recipes from API
+        console.log("[Recipes] Cache MISS. Fetching from API...");
         const realRecipes = await fetchRealRecipes();
+        console.log("[Recipes] API result count:", realRecipes.length);
         setRecipes(realRecipes);
-        
-        // Cache the results
         writeRecipesCache(realRecipes);
-        
       } catch (err) {
+        console.error("[Recipes] Load error:", err);
         setError("Failed to load recipes. Please try again.");
-        console.error("Error loading recipes:", err);
-        
-        // 如果API失败，尝试使用fallback数据
+        // Fallback
         const fallbackRecipes: Recipe[] = [
           {
             id: "fallback1",
@@ -168,9 +160,9 @@ export default function Recipes() {
         setRecipes(fallbackRecipes);
       } finally {
         setLoading(false);
+        console.groupEnd();
       }
     };
-
     loadRecipes();
   }, []);
 
@@ -201,6 +193,7 @@ export default function Recipes() {
 
   // Toggle favorite
   const toggleFavorite = (recipeId: string) => {
+    console.log("[Recipes] Toggle favorite:", recipeId);
     const newFavorites = new Set(favorites);
     if (newFavorites.has(recipeId)) {
       newFavorites.delete(recipeId);
@@ -213,6 +206,7 @@ export default function Recipes() {
 
   // Filter and sort recipes
   const filteredAndSortedRecipes = useMemo(() => {
+    const before = recipes.length;
     let filtered = recipes.filter(recipe => {
       const matchesSearch = recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            recipe.ingredients.some(ing => ing.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -225,6 +219,7 @@ export default function Recipes() {
       
       return matchesSearch && matchesFilter;
     });
+    const afterFilter = filtered.length;
 
     // Sort recipes
     filtered.sort((a, b) => {
@@ -243,27 +238,27 @@ export default function Recipes() {
       }
     });
 
+    console.log("[Recipes] Filter/sort:", { before, afterFilter, sortBy, filterAttribute, searchTermLen: searchTerm.length });
     return filtered;
   }, [recipes, searchTerm, filterAttribute, sortBy, favorites]);
 
   const handleRecipeClick = (recipe: Recipe) => {
-    // Navigate to recipe detail page
-    console.log("Navigate to recipe:", recipe.title);
+    if (!recipe?.title) {
+      console.warn("[Recipes] Clicked recipe has no title:", recipe);
+      return;
+    }
+    console.log("[Recipes] Navigate to detail:", recipe.title);
     navigate(`/recipes/${encodeURIComponent(recipe.title)}`);
   };
 
   const handleGenerateRecipe = () => {
     try {
       const plateIngredients = getCurrentPlateIngredients();
+      console.log("[Recipes] Generate with plate ingredients:", plateIngredients);
       const ingredientsParam = plateIngredients.length > 0 ? plateIngredients.join(',') : 'N.A.';
-      
-      console.log('[Recipes] Generating recipe with ingredients:', plateIngredients);
-      
-      // Navigate to RecipeDetail with the actual ingredients from the plate
       navigate(`/recipes/N.A.?prefs=N.A.&dishes=${encodeURIComponent(ingredientsParam)}`);
     } catch (error) {
-      console.error('[Recipes] Error generating recipe:', error);
-      // Fallback to default navigation
+      console.error("[Recipes] Generate error:", error);
       navigate('/recipes/N.A.?prefs=N.A.&dishes=N.A.');
     }
   };
@@ -385,9 +380,17 @@ export default function Recipes() {
                 className={styles.recipeCard}
               >
                 <div className={styles.recipeImageContainer}>
-                  <div className={styles.recipeImagePlaceholder}>
-                    <span className={styles.recipeImageText}>Recipe Image</span>
-                  </div>
+                  {recipe.imageUrl ? (
+                    <img
+                      src={recipe.imageUrl}
+                      alt={recipe.title}
+                      className={styles.recipeImage}
+                    />
+                  ) : (
+                    <div className={styles.recipeImagePlaceholder}>
+                      <span className={styles.recipeImageText}>Recipe Image</span>
+                    </div>
+                  )}
                   
                   {/* Rating badge */}
                   <div className={styles.ratingContainer}>

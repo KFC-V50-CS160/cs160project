@@ -1,9 +1,13 @@
 import type { Route } from "./+types/home";
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, useLocation } from "react-router-dom";
 import { styles } from "./home.styles";
-import { getRecommendedRecipes, getCachedSavedRecipes, type RecipeCardData, clearStoredRecipes } from "../services/recipeApi";
+import {
+  getRecommendedRecipes,
+  getCachedSavedRecipes,
+  type RecipeCardData,
+  getUserDishesFromInventory,
+} from "../services/recipeApi";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -14,6 +18,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [llmQuery, setLlmQuery] = useState("");
   const [showLlmModal, setShowLlmModal] = useState(false);
   const [currentRecipeIndex, setCurrentRecipeIndex] = useState(0);
@@ -40,17 +45,15 @@ export default function Home() {
   // Navigation functions for recipes with animation
   const navigateRecipe = (direction: 'prev' | 'next') => {
     if (recipeAnimating) return; // Prevent multiple rapid clicks
-    
+    const total = recommendations.length;
+    console.log("[Home] Navigate recipe:", direction, "total:", total);
+
     setRecipeAnimating(true);
     setTimeout(() => {
       if (direction === 'prev') {
-        setCurrentRecipeIndex((prev) => 
-          prev > 0 ? prev - 1 : recommendations.length - 1
-        );
+        setCurrentRecipeIndex((prev) => (prev > 0 ? prev - 1 : Math.max(total - 1, 0)));
       } else {
-        setCurrentRecipeIndex((prev) => 
-          prev < recommendations.length - 1 ? prev + 1 : 0
-        );
+        setCurrentRecipeIndex((prev) => (prev < total - 1 ? prev + 1 : 0));
       }
       setTimeout(() => setRecipeAnimating(false), 150); // Short delay for fade in
     }, 150); // Fade out duration
@@ -58,17 +61,15 @@ export default function Home() {
 
   const navigateSaved = (direction: 'prev' | 'next') => {
     if (savedAnimating) return; // Prevent multiple rapid clicks
-    
+    const total = savedRecipes.length;
+    console.log("[Home] Navigate saved:", direction, "total:", total);
+
     setSavedAnimating(true);
     setTimeout(() => {
       if (direction === 'prev') {
-        setCurrentSavedIndex((prev) => 
-          prev > 0 ? prev - 1 : savedRecipes.length - 1
-        );
+        setCurrentSavedIndex((prev) => (prev > 0 ? prev - 1 : Math.max(total - 1, 0)));
       } else {
-        setCurrentSavedIndex((prev) => 
-          prev < savedRecipes.length - 1 ? prev + 1 : 0
-        );
+        setCurrentSavedIndex((prev) => (prev < total - 1 ? prev + 1 : 0));
       }
       setTimeout(() => setSavedAnimating(false), 150); // Short delay for fade in
     }, 150); // Fade out duration
@@ -85,63 +86,233 @@ export default function Home() {
   };
 
   const handleReminderClick = () => {
+    console.log("[Home] Navigate to /inventory");
     navigate('/inventory');
   };
 
-  // 刷新推荐菜谱
+  const reloadingRef = useRef(false);        // 防止并发重复加载
+  const lastReloadAtRef = useRef(0);         // 最小间隔控制
+  const MIN_RELOAD_INTERVAL = 1200;          // ms
+
+  // 统一重载：按组合键从本地或网络获取推荐/已保存卡片（唯一入口）
+  const reloadByComboCache = async () => {
+    reloadingRef.current = true;
+    try {
+      console.groupCollapsed("[Home] reloadByComboCache");
+      const dishes = getUserDishesFromInventory();
+      console.log("current dishes", dishes);
+
+      // 无论是否已有数据，进入 reload 时都显示加载态（你偏好可见的刷新反馈）
+      setRecipesLoading(true);
+
+      const [recs, saved] = await Promise.all([
+        getRecommendedRecipes([], false),
+        getCachedSavedRecipes()
+      ]);
+      setRecommendations(recs);
+      setSavedRecipes(saved);
+      setCurrentRecipeIndex(0);
+      setCurrentSavedIndex(0);
+
+      console.log("[Home] loaded", { recs: recs.length, saved: saved.length });
+    } catch (e) {
+      console.error("[Home] reloadByComboCache failed", e);
+    } finally {
+      setRecipesLoading(false);
+      lastReloadAtRef.current = Date.now();
+      reloadingRef.current = false;
+      console.groupEnd();
+    }
+  };
+
+  // 带最小间隔的触发器
+  const requestReload = () => {
+    if (reloadingRef.current) return;
+    const now = Date.now();
+    if (now - lastReloadAtRef.current < MIN_RELOAD_INTERVAL) return;
+    void reloadByComboCache();
+  };
+
+  // 单一入口：首屏 + 路由变化 + 窗口焦点/历史返回，均通过 reload（本地命中则不走网）
+  useEffect(() => {
+    if (location.pathname === "/") {
+      console.log("[Home] path change -> requestReload");
+      requestReload();
+    }
+
+    const onFocus = () => {
+      console.log("[Home] window focus -> requestReload");
+      requestReload();
+    };
+    const onPopState = () => {
+      console.log("[Home] popstate -> requestReload");
+      requestReload();
+    };
+
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [location.pathname]);
+
+  // 刷新推荐菜谱按钮：直接触发 reload，并显示刷新中的按钮态
   const handleRefreshRecipes = async () => {
-    if (refreshing) return; // 防止重复点击
-    
+    if (reloadingRef.current || refreshing) return;
     setRefreshing(true);
     try {
-      // 强制刷新推荐菜谱
-      const newRecommendations = await getRecommendedRecipes(mockInventoryItems, true);
-      setRecommendations(newRecommendations);
-      
-      // 重置当前索引，如果新数据少于当前索引
-      if (currentRecipeIndex >= newRecommendations.length) {
-        setCurrentRecipeIndex(0);
-      }
-    } catch (error) {
-      console.error("Failed to refresh recipes:", error);
+      await reloadByComboCache(); // 忽略最小间隔，用户主动刷新
     } finally {
       setRefreshing(false);
     }
   };
 
-  // 获取推荐菜谱和已保存菜谱
-  useEffect(() => {
-    const loadRecipes = async () => {
-      console.log("[Home] Loading recipes...");
-      setRecipesLoading(true);
-      try {
-        // 并行获取推荐菜谱和已保存菜谱（都使用缓存）
-        const [recommendedData, savedData] = await Promise.all([
-          getRecommendedRecipes(mockInventoryItems, false), // 明确传递false，优先使用缓存
-          getCachedSavedRecipes() // 使用缓存的已保存菜谱
-        ]);
-        
-        console.log(`[Home] Loaded ${recommendedData.length} recommendations, ${savedData.length} saved recipes`);
-        setRecommendations(recommendedData);
-        setSavedRecipes(savedData);
-      } catch (error) {
-        console.error("Failed to load recipes:", error);
-        // 使用fallback数据
-        setRecommendations([
-          { id: "1", title: "fallback recipe 1", status: "ready to go", difficulty: "easy", time: "30 min", missingItemsCount: 0, ready: true },
-          { id: "2", title: "fallback recipe 2", status: "missing 1 item(s)", difficulty: "medium", time: "45 min", missingItemsCount: 1, ready: false },
-        ]);
-        setSavedRecipes([
-          { id: "3", title: "Saved Fallback 1", status: "ready to go", difficulty: "easy", time: "20 min", missingItemsCount: 0, ready: true },
-          { id: "4", title: "Saved Fallback 2", status: "ready to go", difficulty: "medium", time: "35 min", missingItemsCount: 0, ready: true },
-        ]);
-      } finally {
-        setRecipesLoading(false);
+  // —— 图片缓存工具，与 RecipeDetail 保持一致 —— 
+  const makeHeroKey = (recipeName: string) => `recipeHero:${encodeURIComponent(recipeName)}`;
+  const readHero = (key: string): string | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const url = typeof parsed?.url === "string" ? parsed.url : null;
+      if (url) {
+        console.info("[Home] hero cache hit", { key });
+        return url;
       }
-    };
+      return null;
+    } catch (e) {
+      console.warn("[Home] hero cache read error", e);
+      return null;
+    }
+  };
+  const writeHero = (key: string, url: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify({ t: Date.now(), url }));
+      console.info("[Home] hero cache saved", { key });
+    } catch (e) {
+      console.warn("[Home] hero cache write error", e);
+    }
+  };
 
-    loadRecipes();
-  }, []);
+  // 调用图片生成 API（带缓存）
+  const fetchHeroImage = async (recipeName: string, signal?: AbortSignal): Promise<string | null> => {
+    if (!recipeName) return null;
+    const heroKey = makeHeroKey(recipeName);
+    const cached = readHero(heroKey);
+    if (cached) return cached;
+
+    try {
+      const res = await fetch("https://noggin.rea.gent/magic-tiglon-7454", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer rg_v1_ae72y97juphr37kmg4spwck0un6qdcdybw6r_ngk"
+        },
+        body: JSON.stringify({ recipeName }),
+        signal
+      });
+      const text = await res.text();
+      let url = "";
+      try {
+        const maybe = JSON.parse(text);
+        if (maybe && typeof maybe.url === "string") url = maybe.url;
+      } catch {
+        // 非 JSON 忽略
+      }
+      if (!url) {
+        if (typeof res.url === "string" && res.url.startsWith("http")) url = res.url;
+        else if (/^https?:\/\//i.test(text.trim())) url = text.trim();
+      }
+      if (!url) {
+        console.warn("[Home] hero image: url not found in response");
+        return null;
+      }
+      writeHero(heroKey, url);
+      return url;
+    } catch (e) {
+      console.error("[Home] hero image error", e);
+      return null;
+    }
+  };
+
+  // 为“推荐”补齐图片
+  useEffect(() => {
+    if (!recommendations || recommendations.length === 0) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    (async () => {
+      console.groupCollapsed("[Home] Fill images for recommendations");
+      try {
+        // 仅处理没有 imageUrl 的项，按顺序请求避免打爆 API
+        const updated = await recommendations.reduce<Promise<RecipeCardData[]>>(async (accP, item) => {
+          const acc = await accP;
+          if (item.imageUrl || !item.title) return [...acc, item];
+          const url = await fetchHeroImage(item.title, controller.signal);
+          return [...acc, url ? { ...item, imageUrl: url } : item];
+        }, Promise.resolve<RecipeCardData[]>([]));
+
+        if (!cancelled) {
+          // 仅当有变更时更新，避免无谓重渲染
+          const changed = updated.some((it, i) => it.imageUrl && it.imageUrl !== recommendations[i]?.imageUrl);
+          if (changed) setRecommendations(updated);
+        }
+      } finally {
+        console.groupEnd();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [recommendations]);
+
+  // 为“已保存”补齐图片
+  useEffect(() => {
+    if (!savedRecipes || savedRecipes.length === 0) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    (async () => {
+      console.groupCollapsed("[Home] Fill images for saved recipes");
+      try {
+        const updated = await savedRecipes.reduce<Promise<RecipeCardData[]>>(async (accP, item) => {
+          const acc = await accP;
+          if (item.imageUrl || !item.title) return [...acc, item];
+          const url = await fetchHeroImage(item.title, controller.signal);
+          return [...acc, url ? { ...item, imageUrl: url } : item];
+        }, Promise.resolve<RecipeCardData[]>([]));
+
+        if (!cancelled) {
+          const changed = updated.some((it, i) => it.imageUrl && it.imageUrl !== savedRecipes[i]?.imageUrl);
+          if (changed) setSavedRecipes(updated);
+        }
+      } finally {
+        console.groupEnd();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [savedRecipes]);
+
+  // 跳转详情：携带与组合键一致的 prefs/dishes
+  const mirrorDetailCacheBeforeNavigate = (title: string) => {
+    // 简化：由组合键 API 负责写入缓存，这里仅保证参数一致性与日志
+    const prefs = "";
+    const dishes = getUserDishesFromInventory();
+    console.groupCollapsed("[Home] navigate detail intent");
+    console.log("params", { dishName: title, prefs, dishes });
+    console.groupEnd();
+  };
 
   return (
     <div className={styles.pageContainer}>
@@ -195,7 +366,7 @@ export default function Home() {
                 onClick={handleRefreshRecipes}
                 className={`${styles.refreshButton} ${refreshing ? styles.refreshButtonLoading : ''}`}
                 disabled={refreshing}
-                title="获取新菜谱"
+                title="get new recommendations"
               >
                 <svg className={`${styles.refreshIcon} ${refreshing ? styles.refreshIconSpinning : ''}`} fill={styles.svgFill} stroke={styles.svgStroke} viewBox={styles.svgViewBox}>
                   <path strokeLinecap={styles.svgStrokeLinecap} strokeLinejoin={styles.svgStrokeLinejoin} strokeWidth={styles.svgStrokeWidth} d={styles.svgPathRefresh} />
@@ -231,18 +402,59 @@ export default function Home() {
             ) : recommendations.length > 0 ? (
               <div 
                 className={`${styles.recipeCard} ${recipeAnimating ? styles.recipeCardAnimating : ''}`}
-                onClick={() => navigate(`/recipes/${encodeURIComponent(recommendations[currentRecipeIndex].title)}`)}
-                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  const title = recommendations[currentRecipeIndex].title;
+                  mirrorDetailCacheBeforeNavigate(title);
+                  const prefs = ""; // 与 API 默认一致
+                  const dishes = getUserDishesFromInventory(); // 与 API 内部使用一致
+                  console.log("[Home] navigate to detail with", { dishName: title, prefs, dishes });
+                  navigate(
+                    `/recipes/${encodeURIComponent(title)}?prefs=${encodeURIComponent(prefs)}&dishes=${encodeURIComponent(dishes)}`
+                  );
+                }}
+                style={{
+                  cursor: 'pointer',
+                  width: '100%',
+                  maxWidth: '960px',
+                  margin: '0 auto'
+                }}
               >
-                <div className={styles.recipeImagePlaceholder}>
+                <div
+                  className={styles.recipeImagePlaceholder}
+                  style={{
+                    width: '100%',
+                    position: 'relative',
+                    paddingTop: '75%', // 4:3，更高不“瘦”
+                    overflow: 'hidden',
+                    borderRadius: '12px'
+                  }}
+                >
                   {recommendations[currentRecipeIndex].imageUrl ? (
                     <img 
                       src={recommendations[currentRecipeIndex].imageUrl} 
                       alt={recommendations[currentRecipeIndex].title}
                       className={styles.recipeImage}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
                     />
                   ) : (
-                    <span className={styles.recipeImageText}>Recipe Image</span>
+                    // 居中占位
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <span className={styles.recipeImageText}>Recipe Image</span>
+                    </div>
                   )}
                 </div>
                 <button className={styles.recipeFavoriteButton}>
@@ -302,18 +514,58 @@ export default function Home() {
             ) : savedRecipes.length > 0 ? (
               <div 
                 className={`${styles.savedRecipeCard} ${savedAnimating ? styles.savedRecipeCardAnimating : ''}`}
-                onClick={() => navigate(`/recipes/${encodeURIComponent(savedRecipes[currentSavedIndex].title)}`)}
-                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  const title = savedRecipes[currentSavedIndex].title;
+                  mirrorDetailCacheBeforeNavigate(title);
+                  const prefs = ""; // 与 API 默认一致
+                  const dishes = getUserDishesFromInventory(); // 与 API 内部使用一致
+                  console.log("[Home] navigate to detail with", { dishName: title, prefs, dishes });
+                  navigate(
+                    `/recipes/${encodeURIComponent(title)}?prefs=${encodeURIComponent(prefs)}&dishes=${encodeURIComponent(dishes)}`
+                  );
+                }}
+                style={{
+                  cursor: 'pointer',
+                  width: '100%',
+                  maxWidth: '960px',
+                  margin: '0 auto'
+                }}
               >
-                <div className={styles.savedRecipeImagePlaceholder}>
+                <div
+                  className={styles.savedRecipeImagePlaceholder}
+                  style={{
+                    width: '100%',
+                    position: 'relative',
+                    paddingTop: '75%', // 4:3，更高不“瘦”
+                    overflow: 'hidden',
+                    borderRadius: '12px'
+                  }}
+                >
                   {savedRecipes[currentSavedIndex].imageUrl ? (
                     <img 
                       src={savedRecipes[currentSavedIndex].imageUrl} 
                       alt={savedRecipes[currentSavedIndex].title}
                       className={styles.savedRecipeImage}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
                     />
                   ) : (
-                    <span className={styles.savedRecipeImageText}>Saved Recipe</span>
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <span className={styles.savedRecipeImageText}>Saved Recipe</span>
+                    </div>
                   )}
                 </div>
                 <button className={styles.savedRecipeFavoriteButton}>
