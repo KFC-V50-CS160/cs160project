@@ -1,9 +1,14 @@
 import type { Route } from "./+types/recipes";
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { styles } from "./recipes.styles";
 import "./recipes.css";
-import { fetchMultipleRecipes, type RecipeCardData } from "../services/recipeApi";
+import { 
+  fetchMultipleRecipes, 
+  type RecipeCardData,
+  getUserDishesFromInventory,
+  buildCardsFromCache
+} from "../services/recipeApi";
 import { useInventory } from "../services/inventoryContext";
 
 // 扩展API类型以适配recipes页面需求
@@ -17,44 +22,75 @@ type Recipe = RecipeCardData & {
   missingItems?: number; // 别名，与missingItemsCount相同
 };
 
-// Cache management
-const CACHE_KEY = "magicfridge_recipes";
-const CACHE_EXPIRY = 1000 * 60 * 30; // 30 minutes
-
-function readRecipesCache(): Recipe[] | null {
+// —— 图片缓存工具，与 Home/RecipeDetail 保持一致 —— 
+const makeHeroKey = (recipeName: string) => `recipeHero:${encodeURIComponent(recipeName)}`;
+const readHero = (key: string): string | null => {
   if (typeof window === "undefined") return null;
   try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return null;
-    
-    const parsed = JSON.parse(cached);
-    const now = Date.now();
-    
-    if (parsed.expiry && now > parsed.expiry) {
-      localStorage.removeItem(CACHE_KEY);
-      return null;
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const url = typeof parsed?.url === "string" ? parsed.url : null;
+    if (url) {
+      console.info("[Recipes] hero cache hit", { key });
+      return url;
     }
-    
-    return Array.isArray(parsed.data) ? parsed.data : null;
+    return null;
   } catch (e) {
-    console.warn("Failed to read recipes cache:", e);
+    console.warn("[Recipes] hero cache read error", e);
     return null;
   }
-}
-
-function writeRecipesCache(recipes: Recipe[]) {
+};
+const writeHero = (key: string, url: string) => {
   if (typeof window === "undefined") return;
   try {
-    const cacheData = {
-      data: recipes,
-      expiry: Date.now() + CACHE_EXPIRY,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    window.localStorage.setItem(key, JSON.stringify({ t: Date.now(), url }));
+    console.info("[Recipes] hero cache saved", { key });
   } catch (e) {
-    console.warn("Failed to write recipes cache:", e);
+    console.warn("[Recipes] hero cache write error", e);
   }
-}
+};
+
+// 调用图片生成 API（带缓存）
+const fetchHeroImage = async (recipeName: string, signal?: AbortSignal): Promise<string | null> => {
+  if (!recipeName) return null;
+  const heroKey = makeHeroKey(recipeName);
+  const cached = readHero(heroKey);
+  if (cached) return cached;
+
+  try {
+    const res = await fetch("https://noggin.rea.gent/magic-tiglon-7454", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer rg_v1_ae72y97juphr37kmg4spwck0un6qdcdybw6r_ngk"
+      },
+      body: JSON.stringify({ recipeName }),
+      signal
+    });
+    const text = await res.text();
+    let url = "";
+    try {
+      const maybe = JSON.parse(text);
+      if (maybe && typeof maybe.url === "string") url = maybe.url;
+    } catch {
+      // 非 JSON 忽略
+    }
+    if (!url) {
+      if (typeof res.url === "string" && res.url.startsWith("http")) url = res.url;
+      else if (/^https?:\/\//i.test(text.trim())) url = text.trim();
+    }
+    if (!url) {
+      console.warn("[Recipes] hero image: url not found in response");
+      return null;
+    }
+    writeHero(heroKey, url);
+    return url;
+  } catch (e) {
+    console.error("[Recipes] hero image error", e);
+    return null;
+  }
+};
 
 // 转换API数据为recipes页面需要的格式
 function convertApiDataToRecipe(apiData: RecipeCardData): Recipe {
@@ -71,16 +107,115 @@ function convertApiDataToRecipe(apiData: RecipeCardData): Recipe {
   };
 }
 
-// 从API获取真实菜谱数据
-async function fetchRealRecipes(): Promise<Recipe[]> {
-  const dishNames = [
+// Recipes页面专用的缓存存储键
+const RECIPES_STORAGE_KEY = "magicfridge_recipes_page";
+const RECIPES_DISH_NAMES_KEY = "magicfridge_recipes_dish_names";
+
+// 所有可能的菜谱名称池
+const ALL_POSSIBLE_DISHES = [
     "Chicken Stir Fry", "Vegetable Soup", "Pasta Carbonara", "Fried Rice", "Grilled Salmon",
     "Beef Noodle Soup", "Fish Tacos", "Mushroom Risotto", "Pork Dumplings", "Tofu Curry",
-    "Shrimp Tempura", "Chicken Tikka", "Vegetable Curry", "Beef Stew", "Fish and Chips"
-  ];
+  "Shrimp Tempura", "Chicken Tikka", "Vegetable Curry", "Beef Stew", "Fish and Chips",
+  "Pork Chops", "Chicken Wings", "Veggie Burger", "Salmon Teriyaki", "Beef Tacos",
+  "Vegetable Stir Fry", "Chicken Caesar Salad", "Pasta Primavera", "Shrimp Scampi", 
+  "Stuffed Peppers", "Egg Fried Rice", "Lemon Chicken", "Spaghetti Bolognese", 
+  "Roast Duck", "Mapo Tofu", "Clam Chowder", "Chicken Alfredo", "Eggplant Parmesan",
+  "Greek Salad", "Lasagna", "Chicken Parmesan", "Pad Thai", "Falafel Wrap", "BBQ Ribs"
+];
+
+// 读写固定的菜谱列表（持久化，与home的随机菜名逻辑类似）
+function getRecipesDishesFromStorage(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(RECIPES_DISH_NAMES_KEY);
+    if (!raw) return [];
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+function saveRecipesDishesToStorage(dishes: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(RECIPES_DISH_NAMES_KEY, JSON.stringify(dishes));
+  } catch {
+    // ignore
+  }
+}
+
+// 读写recipes页面的卡片缓存
+function readRecipesPageCache(): Recipe[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(RECIPES_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const payload = parsed?.data ?? parsed;
+    return Array.isArray(payload) ? payload : null;
+  } catch (e) {
+    console.warn("[Recipes] Cache read error:", e);
+    return null;
+  }
+}
+function writeRecipesPageCache(recipes: Recipe[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const pack = { t: Date.now(), data: recipes };
+    localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(pack));
+    console.log("[Recipes] Cache saved:", recipes.length, "recipes");
+  } catch (e) {
+    console.warn("[Recipes] Cache write error:", e);
+  }
+}
+
+// 从组合键缓存获取菜谱（现在有页面级缓存了）
+async function fetchRecipesViaComboCache(): Promise<Recipe[]> {
+  // 1. 先尝试页面级缓存
+  const cached = readRecipesPageCache();
+  if (cached && cached.length > 0) {
+    console.log("[Recipes] Page cache HIT. Count:", cached.length);
+    return cached;
+  }
+
+  // 2. 获取或初始化固定的菜谱列表
+  let selectedDishes = getRecipesDishesFromStorage();
+  if (selectedDishes.length === 0) {
+    // 随机选择一定数量的菜谱，但保持固定（类似home的随机菜名）
+    selectedDishes = ALL_POSSIBLE_DISHES.slice().sort(() => Math.random() - 0.5).slice(0, 20);
+    saveRecipesDishesToStorage(selectedDishes);
+    console.log("[Recipes] Initialized dish list:", selectedDishes.length);
+  } else {
+    console.log("[Recipes] Using stored dish list:", selectedDishes.length);
+  }
+
+  // 3. 从API获取数据
+  const dishes = getUserDishesFromInventory();
+  console.groupCollapsed("[Recipes] fetchRecipesViaComboCache");
+  console.log("dishes from inventory", dishes);
+  console.log("selected dishes", selectedDishes);
   
-  const apiRecipes = await fetchMultipleRecipes(dishNames);
-  return apiRecipes.map(convertApiDataToRecipe);
+  const apiRecipes = await fetchMultipleRecipes(selectedDishes, "", dishes);
+  const recipes = apiRecipes.map(convertApiDataToRecipe);
+  
+  // 4. 缓存结果
+  writeRecipesPageCache(recipes);
+  
+  console.log("[Recipes] loaded", { count: recipes.length });
+  console.groupEnd();
+  return recipes;
+}
+
+// 强制刷新：清除页面缓存和菜谱列表，重新生成
+function forceRefreshRecipes(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(RECIPES_STORAGE_KEY);
+    localStorage.removeItem(RECIPES_DISH_NAMES_KEY);
+    console.log("[Recipes] Force refresh - cleared caches");
+  } catch (e) {
+    console.warn("[Recipes] Force refresh error:", e);
+  }
 }
 
 export function meta({}: Route.MetaArgs) {
@@ -89,10 +224,11 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Recipes() {
   const navigate = useNavigate();
-  const { getCurrentPlateIngredients } = useInventory();
+  const location = useLocation();
+  const { loaded, getCurrentPlateIngredients } = useInventory();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -102,69 +238,81 @@ export default function Recipes() {
   // Favorites management
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  // Load recipes data from real API
-  useEffect(() => {
-    const loadRecipes = async () => {
-      console.groupCollapsed("[Recipes] Load START");
+  // 与 Home 一致的缓存和刷新逻辑
+  const reloadingRef = useRef(false);
+  const lastReloadAtRef = useRef(0);
+  const MIN_RELOAD_INTERVAL = 1200;
+
+  const reloadByComboCache = async (forceRefresh: boolean = false) => {
+    reloadingRef.current = true;
+    try {
+      console.groupCollapsed("[Recipes] reloadByComboCache");
+      const dishes = getUserDishesFromInventory();
+      console.log("current dishes", dishes);
+      console.log("force refresh", forceRefresh);
+      
+      // 如果是强制刷新，先清除缓存
+      if (forceRefresh) {
+        forceRefreshRecipes();
+      }
+      
       setLoading(true);
-      setError(null);
-      try {
-        // Try to load from cache first
-        const cached = readRecipesCache();
-        if (cached) {
-          console.log("[Recipes] Cache HIT. Count:", cached.length);
-          setRecipes(cached);
+      const apiRecipes = await fetchRecipesViaComboCache();
+      setRecipes(apiRecipes);
+      console.log("[Recipes] loaded", { count: apiRecipes.length });
+    } catch (e) {
+      console.error("[Recipes] reloadByComboCache failed", e);
+    } finally {
+      setLoading(false);
+      lastReloadAtRef.current = Date.now();
+      reloadingRef.current = false;
+      console.groupEnd();
+    }
+  };
+
+  const requestReload = () => {
+    if (!loaded) {
+      console.log("[Recipes] inventory not loaded yet, skip reload");
           return;
         }
-        console.log("[Recipes] Cache MISS. Fetching from API...");
-        const realRecipes = await fetchRealRecipes();
-        console.log("[Recipes] API result count:", realRecipes.length);
-        setRecipes(realRecipes);
-        writeRecipesCache(realRecipes);
-      } catch (err) {
-        console.error("[Recipes] Load error:", err);
-        setError("Failed to load recipes. Please try again.");
-        // Fallback
-        const fallbackRecipes: Recipe[] = [
-          {
-            id: "fallback1",
-            title: "Fallback Recipe 1",
-            status: "ready",
-            difficulty: "easy",
-            time: "30 min",
-            estimatedTime: 30,
-            missingItemsCount: 0,
-            missingItems: 0,
-            ready: true,
-            rating: 4.2,
-            ratingCount: 156,
-            ingredients: ["chicken", "vegetables"],
-            description: "A simple and delicious fallback recipe."
-          },
-          {
-            id: "fallback2", 
-            title: "Fallback Recipe 2",
-            status: "missing",
-            difficulty: "medium",
-            time: "45 min",
-            estimatedTime: 45,
-            missingItemsCount: 2,
-            missingItems: 2,
-            ready: false,
-            rating: 4.5,
-            ratingCount: 89,
-            ingredients: ["beef", "pasta"],
-            description: "Another fallback recipe for when API fails."
-          }
-        ];
-        setRecipes(fallbackRecipes);
-      } finally {
-        setLoading(false);
-        console.groupEnd();
+    if (reloadingRef.current) return;
+    const now = Date.now();
+    if (now - lastReloadAtRef.current < MIN_RELOAD_INTERVAL) return;
+    void reloadByComboCache();
+  };
+
+  // 首屏 + 路由变化：仅在 inventory 已加载后才触发 reload
+  useEffect(() => {
+    if (location.pathname === "/recipes" && loaded) {
+      console.log("[Recipes] path change -> requestReload (inventory loaded)");
+      requestReload();
+    }
+
+    const onPopState = () => {
+      if (!loaded) {
+        console.log("[Recipes] popstate -> inventory not loaded, skip");
+        return;
       }
+      console.log("[Recipes] popstate -> requestReload");
+      requestReload();
     };
-    loadRecipes();
-  }, []);
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [location.pathname, loaded]);
+
+  // 刷新按钮：强制刷新，清除所有缓存
+  const handleRefreshRecipes = async () => {
+    if (!loaded || reloadingRef.current || refreshing) return;
+    setRefreshing(true);
+    try {
+      await reloadByComboCache(true); // 强制刷新
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -190,6 +338,40 @@ export default function Recipes() {
       }
     }
   };
+
+  // 为所有菜谱补齐图片（与 Home 一致）
+  useEffect(() => {
+    if (!recipes || recipes.length === 0) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    (async () => {
+      console.groupCollapsed("[Recipes] Fill images for recipes");
+      try {
+        // 仅处理没有 imageUrl 的项，按顺序请求避免打爆 API
+        const updated = await recipes.reduce<Promise<Recipe[]>>(async (accP, item) => {
+          const acc = await accP;
+          if (item.imageUrl || !item.title) return [...acc, item];
+          const url = await fetchHeroImage(item.title, controller.signal);
+          return [...acc, url ? { ...item, imageUrl: url } : item];
+        }, Promise.resolve<Recipe[]>([]));
+
+        if (!cancelled) {
+          // 仅当有变更时更新，避免无谓重渲染
+          const changed = updated.some((it, i) => it.imageUrl && it.imageUrl !== recipes[i]?.imageUrl);
+          if (changed) setRecipes(updated);
+        }
+      } finally {
+        console.groupEnd();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [recipes]);
 
   // Toggle favorite
   const toggleFavorite = (recipeId: string) => {
@@ -242,13 +424,30 @@ export default function Recipes() {
     return filtered;
   }, [recipes, searchTerm, filterAttribute, sortBy, favorites]);
 
+  // 跳转详情：携带与组合键一致的 prefs/dishes（与 Home 一致）
+  const mirrorDetailCacheBeforeNavigate = (title: string) => {
+    // 简化：由组合键 API 负责写入缓存，这里仅保证参数一致性与日志
+    const prefs = "";
+    const dishes = getUserDishesFromInventory();
+    console.groupCollapsed("[Recipes] navigate detail intent");
+    console.log("params", { dishName: title, prefs, dishes });
+    console.groupEnd();
+  };
+
   const handleRecipeClick = (recipe: Recipe) => {
     if (!recipe?.title) {
       console.warn("[Recipes] Clicked recipe has no title:", recipe);
       return;
     }
     console.log("[Recipes] Navigate to detail:", recipe.title);
-    navigate(`/recipes/${encodeURIComponent(recipe.title)}`);
+    const title = recipe.title;
+    mirrorDetailCacheBeforeNavigate(title);
+    const prefs = ""; // 与 API 默认一致
+    const dishes = getUserDishesFromInventory(); // 与 API 内部使用一致
+    console.log("[Recipes] navigate to detail with", { dishName: title, prefs, dishes });
+    navigate(
+      `/recipes/${encodeURIComponent(title)}?prefs=${encodeURIComponent(prefs)}&dishes=${encodeURIComponent(dishes)}`
+    );
   };
 
   const handleGenerateRecipe = () => {
@@ -264,11 +463,8 @@ export default function Recipes() {
   };
 
   const handleRetry = () => {
-    // Clear cache and reload
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(CACHE_KEY);
-    }
-    window.location.reload();
+    // 强制刷新，清除缓存
+    void reloadByComboCache(true);
   };
 
   if (loading) {
@@ -283,21 +479,7 @@ export default function Recipes() {
     );
   }
 
-  if (error) {
-    return (
-      <div className={styles.pageContainer}>
-        <div className={styles.mainContainer}>
-          <div className={styles.errorState}>
-            <h3 className={styles.errorTitle}>Oops! Something went wrong</h3>
-            <p className={styles.errorMessage}>{error}</p>
-            <button onClick={handleRetry} className={styles.retryButton}>
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className={styles.pageContainer}>
@@ -318,6 +500,19 @@ export default function Recipes() {
             />
           </div>
           
+          <div className="flex gap-2">
+            {/* Refresh Button (与 Home 一致) */}
+            <button
+              onClick={handleRefreshRecipes}
+              className={`px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={refreshing || !loaded}
+              title="refresh recipes"
+            >
+              <svg className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          
           {/* Generate Recipe Button */}
           <button
             onClick={handleGenerateRecipe}
@@ -326,6 +521,7 @@ export default function Recipes() {
           >
             Generate Recipe {getCurrentPlateIngredients().length > 0 && `(${getCurrentPlateIngredients().length} ingredients)`}
           </button>
+          </div>
         </div>
 
         {/* Filter section - inline layout */}
