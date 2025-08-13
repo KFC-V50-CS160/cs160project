@@ -47,8 +47,8 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	/* header height (two-line title) + tighter gap */
-	margin-top: 88px;
+	/* Increased overlap again to tighten top gap */
+	margin-top: calc(var(--cooking-header-height, 120px) - 78px);
 }
 
 .lyric-instructions-wrapper {
@@ -69,22 +69,20 @@
 .lyric-instructions-cutout-bottom { display: none; }
 
 /* Cooking page styles */
-.cooking-page {
-	/* Neutral, subtle dark slate background */
-	background:
-		radial-gradient(1000px 600px at 20% 10%, rgba(255,255,255,0.04), transparent 60%),
-		radial-gradient(800px 500px at 80% 0%, rgba(255,255,255,0.03), transparent 55%),
-		linear-gradient(180deg, #0f1115 0%, #161a20 55%, #1b2027 100%);
+ .cooking-page {
+	/* Unified darker background across cooking/home/recipes */
+	background: linear-gradient(to bottom right, #111827 0%, #1f2937 100%);
 	min-height: 100vh;
-	color: #eaeaea;
+	color: #f1f5f9;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: flex-end;
 	font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 	overflow-x: hidden;
-	/* Prevent horizontal scroll from scaled children */
 }
+
+@media (prefers-color-scheme: light) { .cooking-page { color: #f1f5f9; } }
 
 .cooking-content {
 	width: 100vw;
@@ -94,8 +92,8 @@
 	flex-direction: column;
 	align-items: stretch;
 	justify-content: flex-start;
-	/* extra bottom space so nothing hides under nav or fixed chat */
-	padding: 16px 0 280px 0;
+	/* tighter top (none) and reduced bottom padding to shrink blank space */
+	padding: 0 0 130px 0;
 	box-sizing: border-box;
 }
 
@@ -109,6 +107,9 @@
 }
 
 
+
+
+
 .lyric-instructions {
 	flex: 1;
 	overflow-y: auto; /* ensure scrollbar */
@@ -120,7 +121,8 @@
 	width: 100%;
 	max-width: 430px; /* match header width */
 	margin: 0 auto;
-	padding: 6px 8px 40px 8px; /* compact to show more steps */
+	/* minimal padding: almost flush with header, less bottom gap */
+	padding: 0 6px 8px 6px;
 	/* less top padding, a bit more bottom padding for visual gap above controls */
 	display: flex;
 	flex-direction: column;
@@ -219,20 +221,51 @@
 }
 .cooking-header::after { display: none; }
 
+
+
+
 .header-box {
 	pointer-events: auto;
-	background: rgba(8,8,9,0.86);
-	backdrop-filter: blur(6px);
-	border: 1px solid rgba(255,255,255,0.12);
-	border-radius: 16px;
-	padding: 10px 14px 12px 14px;
+	/* Darker neutral glass to reduce blue */
+	background: linear-gradient(180deg, rgba(17,24,39,0.92) 0%, rgba(17,24,39,0.82) 50%, rgba(17,24,39,0.58) 100%);
+	backdrop-filter: blur(14px) saturate(160%);
+	border: 1px solid rgba(255,255,255,0.05);
+	border-radius: 20px;
+	padding: 12px 18px 0px 18px; /* minimal bottom padding */
 	width: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 10px; /* more vertical space */
+	gap: 12px;
 	position: relative;
-	box-shadow: 0 3px 18px -6px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset;
+	box-shadow: 0 10px 30px -12px rgba(0,0,0,0.55), 0 2px 6px -1px rgba(0,0,0,0.40);
+}
+@media (prefers-color-scheme: light) {
+	.header-box { background: linear-gradient(180deg, rgba(30,41,59,0.12) 0%, rgba(30,41,59,0.08) 55%, rgba(30,41,59,0.04) 100%); border: 1px solid rgba(30,41,59,0.15); box-shadow: 0 8px 24px -12px rgba(30,41,59,0.32), 0 2px 4px -1px rgba(30,41,59,0.18); }
+}
+@media (prefers-color-scheme: dark) {
+	.header-box { background: linear-gradient(180deg, rgba(17,24,39,0.92) 0%, rgba(17,24,39,0.82) 55%, rgba(17,24,39,0.60) 100%); }
+}
+
+/* subtle bottom divider to anchor without enclosing */
+/* Remove prior bottom divider; replace with subtle inner highlight */
+.header-box::after { content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit; box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 1px 0 0 rgba(255,255,255,0.10) inset; mix-blend-mode:normal; }
+@media (prefers-color-scheme: dark) { .header-box::after { box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 1px 0 0 rgba(255,255,255,0.10) inset; } }
+
+/* Adjust title color for light background; keep sizing */
+.cooking-page .recipe-title { 
+	color: #1e293b; 
+	font-weight: 700; 
+	font-size: 1.7rem; 
+	letter-spacing: 0.3px; 
+	font-family: "Inter", "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Arial;
+	text-shadow: 0 1px 0 rgba(255,255,255,0.55), 0 2px 4px rgba(30,41,59,0.15);
+}
+@media (prefers-color-scheme: dark) { 
+	.cooking-page .recipe-title { 
+		color: #f8fafc; 
+		text-shadow: 0 1px 1px rgba(0,0,0,0.6); 
+	}
 }
 
 .control-btn.back-btn-abs { pointer-events: auto; position: absolute; top: 10px; left: 10px; }
@@ -435,12 +468,12 @@
 /* --- Enhancements: hover-only scrollbar, step columns, sticky chat, and header/back styles --- */
 
 /* Show scrollbars only on hover */
-.lyric-instructions { scrollbar-width: none; }
-.lyric-instructions:hover { scrollbar-width: thin; }
-.lyric-instructions::-webkit-scrollbar { width: 0px; height: 0px; }
-.lyric-instructions:hover::-webkit-scrollbar { width: 8px; }
-.lyric-instructions::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.28); border-radius: 8px; }
-.lyric-instructions::-webkit-scrollbar-track { background: transparent; }
+.lyric-instructions { 
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE/Edge */
+	padding-right: 8px;
+}
+.lyric-instructions::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
 
 /* Step row as two columns */
 .lyric-step { display: flex; align-items: flex-start; justify-content: space-between; }
@@ -533,4 +566,4 @@
 }
 
 /* Adjust main content offset to match taller stacked header */
-.main-align-container { margin-top: 140px; }
+.main-align-container { margin-top: calc(var(--cooking-header-height, 120px) - 48px); }

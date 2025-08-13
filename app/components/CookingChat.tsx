@@ -41,6 +41,14 @@ const CookingChat = forwardRef<CookingChatHandle, Props>(function CookingChat({ 
   const wantListenRef = useRef(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
+  useEffect(() => {
+    mutedRef.current = muted;
+    if (muted && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch {}
+      setSpeaking(false);
+    }
+  }, [muted]);
   const [speaking, setSpeaking] = useState(false);
 
   // Preferred younger, natural female voice selection
@@ -129,7 +137,7 @@ const CookingChat = forwardRef<CookingChatHandle, Props>(function CookingChat({ 
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
-      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I had trouble reaching the chef hotline. Please try again.", ts: Date.now() }]);
+  setMessages(prev => [...prev, { role: "assistant", content: "Sorry, Cooking Buddy had trouble connecting. Please try again.", ts: Date.now() }]);
     } finally {
       setLoading(false);
       setInput("");
@@ -148,10 +156,18 @@ const CookingChat = forwardRef<CookingChatHandle, Props>(function CookingChat({ 
     rec.interimResults = false;
     rec.onresult = (e: SpeechRecognitionEvent) => {
       const t = e.results?.[0]?.[0]?.transcript || "";
-      if (t) send(t); // voice path: no expansion trigger
+      if (t) {
+        // Immediately stop further recognition so Cooking Buddy doesn't hear itself
+        wantListenRef.current = false;
+        setWantListen(false);
+        try { rec.stop(); } catch {}
+        setListening(false);
+        send(t); // voice path: no expansion trigger
+      }
     };
     rec.onstart = () => setListening(true);
     rec.onend = () => {
+      // Do not auto-restart unless user explicitly re-enabled wantListen
       setListening(false);
       if (wantListenRef.current) {
         try { rec.start(); setListening(true); } catch {}
@@ -193,16 +209,33 @@ const CookingChat = forwardRef<CookingChatHandle, Props>(function CookingChat({ 
   // Speech synthesis
   const speak = (text: string) => {
     if (!("speechSynthesis" in window)) return;
-    if (muted) return;
+    // Always consult ref for immediate mute state (avoids stale closure or rapid toggle race)
+    if (mutedRef.current) return;
+    // Prevent the recognizer from picking up synthesized speech
+    if (listening) {
+      try { recognitionRef.current?.stop(); } catch {}
+      wantListenRef.current = false;
+      setWantListen(false);
+      setListening(false);
+    }
+    try { window.speechSynthesis.cancel(); } catch {}
     const u = new SpeechSynthesisUtterance(text);
     if (selectedVoice) u.voice = selectedVoice;
     u.rate = 1.03;
     u.pitch = 1.02;
     u.onend = () => setSpeaking(false);
     u.onerror = () => setSpeaking(false);
+    u.onstart = () => {
+      if (mutedRef.current) {
+        try { window.speechSynthesis.cancel(); } catch {}
+        setSpeaking(false);
+      }
+    };
     window.speechSynthesis.cancel();
-    setSpeaking(true);
-    window.speechSynthesis.speak(u);
+    if (!mutedRef.current) {
+      setSpeaking(true);
+      window.speechSynthesis.speak(u);
+    }
   };
 
   const stopSpeaking = () => {
@@ -212,6 +245,9 @@ const CookingChat = forwardRef<CookingChatHandle, Props>(function CookingChat({ 
     setSpeaking(false);
   };
 
+  // If user mutes while a response is speaking (or before next one), ensure all speech stops and none plays.
+  // Mute effect handled above with mutedRef synchronization.
+
   useImperativeHandle(ref, () => ({
     startListening,
     stopListening,
@@ -220,51 +256,50 @@ const CookingChat = forwardRef<CookingChatHandle, Props>(function CookingChat({ 
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-gray-400"></div>
-        {messages.length > 0 && (
-          <button
-            onClick={() => {
-              setMessages([]);
-              try { localStorage.removeItem(makeKey(recipe?.title)); } catch {}
-            }}
-            className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-            aria-label="Clear chat"
-            title="Clear chat"
-          >
-            Clear chat
-          </button>
-        )}
-      </div>
-      <div
-        ref={listRef}
-        className={`overflow-y-auto p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-[max-height] duration-200 ease-out ${expanded ? 'max-h-[320px]' : 'max-h-[200px]'} `}
-      >
-        {messages.length === 0 && (
-          <p className="text-base text-gray-600 dark:text-gray-300">
-            I’m Cooking Buddy, ask me anything about this recipe!
-          </p>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex mb-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'} max-w-[85%] px-2.5 py-2 rounded-xl whitespace-pre-wrap ${m.role === 'user' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
-              {m.content}
-            </div>
+      {(messages.length > 0 || loading || error) && (
+        <>
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-400"></div>
+            {messages.length > 0 && (
+              <button
+                onClick={() => {
+                  setMessages([]);
+                  try { localStorage.removeItem(makeKey(recipe?.title)); } catch {}
+                }}
+                className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                aria-label="Clear chat"
+                title="Clear chat"
+              >
+                Clear chat
+              </button>
+            )}
           </div>
-        ))}
-        {loading && (
-          <div className="text-xs text-gray-500 dark:text-gray-400">Chef K is thinking…</div>
-        )}
-        {error && (
-          <div className="text-xs text-red-700 dark:text-red-400">{error}</div>
-        )}
-      </div>
+          <div
+            ref={listRef}
+            className={`overflow-y-auto p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-[max-height] duration-200 ease-out ${expanded ? 'max-h-[320px]' : 'max-h-[200px]'} `}
+          >
+            {messages.map((m, i) => (
+              <div key={i} className={`flex mb-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'} max-w-[85%] px-2.5 py-2 rounded-xl whitespace-pre-wrap ${m.role === 'user' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="text-xs text-gray-500 dark:text-gray-400">Cooking Buddy is thinking…</div>
+            )}
+            {error && (
+              <div className="text-xs text-red-700 dark:text-red-400">{error}</div>
+            )}
+          </div>
+        </>
+      )}
       <div className="flex gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") send(input, { typed: true }); }}
-          placeholder="Type your question…"
+          placeholder="Ask Cooking Buddy anything..."
           aria-label="Chat input"
           className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
         />

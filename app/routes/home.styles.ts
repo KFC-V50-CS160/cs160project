@@ -12,10 +12,11 @@ export const styles = {
     
     // LLM Query Section Classes (Mobile Optimized)
     llmContainer: "bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-blue-300 dark:hover:border-blue-500 transition-colors duration-200",
-    llmTitle: "text-sm font-semibold text-gray-800 dark:text-white mb-2",
-    llmSubtitle: "text-xs text-gray-600 dark:text-gray-300 flex items-center",
+    llmTitle: "text-lg font-bold text-gray-800 dark:text-white mb-1 tracking-tight",
+    llmSubtitle: "text-sm text-gray-600 dark:text-gray-300 flex items-center",
     llmPlayButton: "inline-flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full ml-2",
     llmPlayIcon: "w-3 h-3 text-white",
+    llmChatPlaceholder: "mt-2 w-full flex items-center gap-2 px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 bg-white/70 dark:bg-gray-700/70 backdrop-blur-sm text-gray-600 dark:text-gray-300 text-xs italic shadow-sm hover:shadow transition-shadow cursor-text select-none",
     
     // LLM Modal Styles
     llmModalOverlay: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm",
@@ -29,7 +30,7 @@ export const styles = {
     
     // Reminders Section Classes (Mobile Optimized)
     remindersContainer: "bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-orange-300 dark:hover:border-orange-500 transition-colors duration-200",
-    remindersTitle: "text-sm font-semibold text-gray-800 dark:text-white mb-3",
+    remindersTitle: "text-lg font-bold text-gray-800 dark:text-white mb-3",
     remindersList: "space-y-2",
     reminderItem: "flex items-center justify-between",
     reminderDot: "w-2 h-2 bg-red-500 rounded-full mr-2",
@@ -39,7 +40,7 @@ export const styles = {
     // Recipe Section Base Classes (Mobile Optimized)
     recipeSection: "bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border-2 border-gray-200 dark:border-gray-600",
     recipeSectionHeader: "flex justify-between items-center mb-4",
-    recipeSectionTitle: "text-lg font-bold text-gray-800 dark:text-white",
+    recipeSectionTitle: "text-lg font-bold text-gray-800 dark:text-white tracking-tight",
     
     // Navigation Controls (Mobile Optimized)
     navigationControls: "flex space-x-2",
