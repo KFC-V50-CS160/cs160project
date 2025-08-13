@@ -1,10 +1,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import FloatingNav from "../components/FloatingNav";
-import AudioAssistant from "../components/AudioAssistant";
+import CookingChat from "../components/CookingChat";
 import "../cooking.css";
-import "../audio-assistant.css";
 
 // Fallback demo instructions (used only if nothing in state or storage)
 const FALLBACK_INSTRUCTIONS = [
@@ -35,6 +33,15 @@ export default function Cooking() {
   const [stepTimes, setStepTimes] = useState<number[]>([]);
   const [hasSession, setHasSession] = useState(false); // true when a recipe has been chosen before
   const [stepChangeFlash, setStepChangeFlash] = useState(false);
+  // Chat ref no longer needed; mic is embedded in CookingChat controls
+
+  // Timers
+  const totalDurationSec = React.useMemo(() => (stepTimes && stepTimes.length ? stepTimes.reduce((a, b) => a + (b || 0), 0) * 60 : 0), [stepTimes]);
+  const stepDurationSec = React.useMemo(() => ((stepTimes?.[currentStep] || 0) * 60), [stepTimes, currentStep]);
+  const [isCooking, setIsCooking] = useState(false);
+  const [totalLeftSec, setTotalLeftSec] = useState<number>(0);
+  const [stepLeftSec, setStepLeftSec] = useState<number>(0);
+  const [lastTick, setLastTick] = useState<number | null>(null);
 
   // Function to handle step changes from AI
   const handleStepChange = (stepChange: number) => {
@@ -51,6 +58,69 @@ export default function Cooking() {
       setStepChangeFlash(true);
       setTimeout(() => setStepChangeFlash(false), 500);
     }
+  };
+
+  // Initialize timers when data changes
+  useEffect(() => {
+    setTotalLeftSec(totalDurationSec);
+    setStepLeftSec(stepDurationSec);
+  }, [totalDurationSec, stepDurationSec]);
+
+  // Tick timers when running
+  useEffect(() => {
+    if (!isCooking) return;
+    let id: any;
+    const tick = () => {
+      const now = Date.now();
+      const last = lastTick ?? now;
+      const delta = (now - last) / 1000;
+      setTotalLeftSec(v => Math.max(0, v - delta));
+      setStepLeftSec(v => Math.max(0, v - delta));
+      setLastTick(now);
+    };
+    id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [isCooking, lastTick]);
+
+  // Stop when total elapsed
+  useEffect(() => {
+    if (isCooking && totalLeftSec <= 0) {
+      setIsCooking(false);
+      setLastTick(null);
+    }
+  }, [isCooking, totalLeftSec]);
+
+  // When step changes, reset that step timer
+  useEffect(() => {
+    setStepLeftSec(stepDurationSec);
+    if (isCooking) setLastTick(Date.now());
+  }, [currentStep]);
+
+  const toggleCooking = () => {
+    if (isCooking) {
+      setIsCooking(false);
+      setLastTick(null);
+    } else {
+      // If timers are uninitialized, reset them
+      if (!totalLeftSec) setTotalLeftSec(totalDurationSec);
+      if (!stepLeftSec) setStepLeftSec(stepDurationSec);
+      setIsCooking(true);
+      setLastTick(Date.now());
+    }
+  };
+
+  const resetCooking = () => {
+    setIsCooking(false);
+    setTotalLeftSec(totalDurationSec);
+    setStepLeftSec(stepDurationSec);
+    setLastTick(null);
+  };
+
+  const fmt = (s: number) => {
+    const sec = Math.max(0, Math.floor(s));
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const ss = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${ss}`;
   };
 
   // On mount decide source of truth: navigation state (fresh) or localStorage (resume)
@@ -175,24 +245,16 @@ export default function Cooking() {
   const handleSkip = () => setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   const handleRewind = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
-  // Only show 5 steps at a time, centered around currentStep
-  const visibleCount = 5;
-  const half = Math.floor(visibleCount / 2);
-  let start = Math.max(0, currentStep - half);
-  let end = Math.min(steps.length, start + visibleCount);
-  if (end - start < visibleCount) {
-    start = Math.max(0, end - visibleCount);
-  }
-  const visibleSteps = steps.slice(start, end);
+  // Show all steps; scrolling will be handled by the container
 
   if (!hasSession) {
     return (
       <div className="cooking-page">
         <div className="cooking-content">
           <div className="cooking-header">
-            <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
+            <button className="back-icon-btn" onClick={handleBack} aria-label="Back" title="Back">⬅️</button>
           </div>
-          <div className="main-align-container" style={{ flex: 1, marginTop: '88px' }}>
+          <div className="main-align-container" style={{ flex: 1 }}>
             <div style={{ height: '33vh', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
               <p className="choose-recipe-message">Let's choose a recipe first!</p>
             </div>
@@ -205,67 +267,101 @@ export default function Cooking() {
   return (
     <div className="cooking-page">
       <div className="cooking-content">
-        <div className="cooking-header">
-          <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
-          <h1 className="recipe-title" style={{ margin: '0', textAlign: 'left' }}>{recipeTitle}</h1>
+    <div className="cooking-header">
+          <div className="header-box">
+            <button className="control-btn back-btn-abs" onClick={handleBack} aria-label="Back">⬅️</button>
+            <h1 className="recipe-title" style={{ margin: '0' }}>{recipeTitle}</h1>
+            <div className="total-progress-row">
+              <div
+                className={`total-progress-container${isCooking ? ' running' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={toggleCooking}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCooking(); } }}
+                aria-label={isCooking ? 'Pause total recipe timer' : 'Start total recipe timer'}
+                title={isCooking ? 'Pause total recipe timer' : 'Start total recipe timer'}
+              >
+                <span className="progress-icon" aria-hidden="true">⏱</span>
+                <div className="total-progress-bar" aria-hidden="true">
+                  <div
+                    className="total-progress-fill"
+                    style={{ width: `${totalDurationSec > 0 ? Math.min(100, Math.max(0, (1 - (totalLeftSec / totalDurationSec)) * 100)) : 0}%` }}
+                  />
+                </div>
+                <span className="total-time-label">{fmt(totalLeftSec || totalDurationSec)}</span>
+              </div>
+              <button
+                className={`control-btn play-pause-btn${isCooking ? ' running' : ''}`}
+                onClick={toggleCooking}
+                aria-label={isCooking ? 'Pause total timer' : 'Start total timer'}
+                title={isCooking ? 'Pause total timer' : 'Start total timer'}
+              >
+                {isCooking ? '⏸' : '▶'}
+              </button>
+              <button className="control-btn reset-btn" onClick={resetCooking} aria-label="Reset timers" title="Reset timers">⟲</button>
+            </div>
+          </div>
         </div>
         <div className="main-align-container">
           <div className="lyric-instructions-wrapper" style={{ marginTop: '0', textAlign: 'left' }}>
-            <div className="lyric-instructions-cutout lyric-instructions-cutout-top" />
             <div className="lyric-instructions" ref={containerRef}>
-              {visibleSteps.map((step, idx) => {
-                const actualIdx = start + idx; // actual index in full instructions
+              {steps.map((step, idx) => {
                 let distClass: string;
-                if (actualIdx < currentStep) {
+                if (idx < currentStep) {
                   distClass = 'dist-4'; // past steps
-                } else if (actualIdx === currentStep) {
+                } else if (idx === currentStep) {
                   distClass = 'dist-0'; // selected
                 } else {
-                  distClass = 'dist-2'; // all future steps uniform fade
+                  distClass = 'dist-2'; // future steps
                 }
+                const durMin = stepTimes[idx] || 0;
+                const isSelected = idx === currentStep;
+                const durSec = (durMin || 0) * 60;
+                const stepLeft = isSelected ? stepLeftSec : durSec;
+                const pct = durSec > 0 && isSelected ? Math.min(100, Math.max(0, (1 - stepLeftSec / durSec) * 100)) : 0;
                 return (
                   <div
-                    key={actualIdx}
-                    className={`lyric-step ${distClass}${actualIdx === currentStep ? " selected" : ""}${actualIdx === currentStep && stepChangeFlash ? " step-flash" : ""}`}
-                    onClick={() => setCurrentStep(actualIdx)}
+                    key={idx}
+                    className={`lyric-step ${distClass}${idx === currentStep ? " selected" : ""}${idx === currentStep && stepChangeFlash ? " step-flash" : ""}`}
+                    onClick={() => setCurrentStep(idx)}
                   >
-                    <span className="step-content">{step}</span>
-                    {stepTimes[actualIdx] > 0 && (
-                      <span className="step-time"> - <em>{stepTimes[actualIdx]} min.</em></span>
-                    )}
+                    <div className="step-left">
+                      <span className="step-index">{idx + 1}.</span>
+                      <span className="step-content">{step}</span>
+                    </div>
+                    <div className="step-time-col">
+                      {durSec > 0 ? (
+                        isSelected ? (
+                          <>
+                            <span className={isCooking ? 'running' : ''}>{fmt(stepLeft)}</span>
+                            <div className="step-progress-bar">
+                              <div className="step-progress-fill" style={{ width: `${pct}%` }} />
+                            </div>
+                          </>
+                        ) : (
+                          <span>{durMin} min</span>
+                        )
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
-            <div className="lyric-instructions-cutout lyric-instructions-cutout-bottom" />
           </div>
         </div>
-        <FloatingNav />
-
-
-
-        <div className="controls custom-controls-layout controls-above-nav">
-          <div className="controls-left">
-            <button className="control-btn" onClick={handleRewind} aria-label="Rewind">⏪</button>
-          </div>
-          <div className="controls-center">
-            <AudioAssistant
-              onStepChange={handleStepChange}
-              recipeContext={{
-                recipeTitle,
+        {/* Chat assistant centered, sticky above bottom nav */}
+        <div className="main-align-container chat-input-row" style={{ padding: '12px 0', marginTop: '8px' }}>
+          <div style={{ width: '100%', margin: '0 auto' }}>
+            <CookingChat
+              recipe={{
+                title: recipeTitle,
+                steps,
                 currentStep,
-                totalSteps: steps.length,
-                steps: steps.map((step, index) => ({
-                  index,
-                  content: step,
-                  rowNumber: index + 1,
-                  time: stepTimes[index] || 0
-                }))
+                stepTimes,
               }}
             />
-          </div>
-          <div className="controls-right">
-            <button className="control-btn" onClick={handleSkip} aria-label="Skip">⏩</button>
           </div>
         </div>
       </div>
