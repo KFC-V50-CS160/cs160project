@@ -23,6 +23,7 @@ interface InventoryContextType {
   getCurrentPlateIngredients: () => string[];
   saveToStorage: () => void;
   loadFromStorage: () => void;
+  loaded: boolean; // 新增：表示本地存储的库存/盘子数据已加载完成
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
@@ -34,6 +35,7 @@ const INVENTORY_STORAGE_KEY = 'magicfridge_inventory';
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [loaded, setLoaded] = useState(false); // 新增
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -89,6 +91,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('[InventoryContext] Failed to load from localStorage:', error);
+    } finally {
+      setLoaded(true); // 标记完成（即便没有数据也视为已加载）
     }
   };
 
@@ -105,14 +109,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <InventoryContext.Provider value={{ 
-      dishes, 
-      setDishes, 
-      inventoryItems, 
-      setInventoryItems, 
+    <InventoryContext.Provider value={{
+      dishes,
+      setDishes,
+      inventoryItems,
+      setInventoryItems,
       getCurrentPlateIngredients,
       saveToStorage,
-      loadFromStorage
+      loadFromStorage,
+      loaded // 新增
     }}>
       {children}
     </InventoryContext.Provider>
@@ -125,4 +130,4 @@ export function useInventory() {
     throw new Error('useInventory must be used within an InventoryProvider');
   }
   return context;
-} 
+}

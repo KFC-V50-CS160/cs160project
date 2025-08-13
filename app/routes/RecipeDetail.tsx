@@ -170,11 +170,11 @@ function useRecipeDetail() {
 
     const controller = new AbortController();
     try {
-      const res = await fetch("https://noggin.rea.gent/coloured-sawfish-2455", {
+      const res = await fetch("https://noggin.rea.gent/strong-crocodile-1199", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer rg_v1_rho6lzo78nf02k4dhvy8xmlgof424rug3x9f_ngk"
+          Authorization: "Bearer rg_v1_9ywglo9vl0010xmeb2u0c4iqsuem814wzi1e_ngk"
         },
         body: JSON.stringify({
           dishName: dishName || "",

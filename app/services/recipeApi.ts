@@ -50,9 +50,9 @@ const SAVED_RECIPES_KEY = "magicfridge_saved_recipes";
 const RANDOM_DISHES_KEY = "magicfridge_random_dishes";
 
 // API端点配置
-const RECIPE_API_URL = "https://noggin.rea.gent/coloured-sawfish-2455";
+const RECIPE_API_URL = "https://noggin.rea.gent/strong-crocodile-1199";
 const IMAGE_API_URL = "https://noggin.rea.gent/magic-tiglon-7454";
-const RECIPE_API_TOKEN = "Bearer rg_v1_rho6lzo78nf02k4dhvy8xmlgof424rug3x9f_ngk";
+const RECIPE_API_TOKEN = "Bearer rg_v1_9ywglo9vl0010xmeb2u0c4iqsuem814wzi1e_ngk";
 const IMAGE_API_TOKEN = "Bearer rg_v1_ae72y97juphr37kmg4spwck0un6qdcdybw6r_ngk";
 
 // 统一响应校验（对齐 RecipeDetail.tsx）
@@ -645,7 +645,9 @@ export async function getRecommendedRecipes(inventoryItems: string[], forceRefre
     "Chicken Stir Fry", "Vegetable Soup", "Pasta Carbonara", "Fried Rice", "Grilled Salmon",
     "Beef Noodle Soup", "Fish Tacos", "Mushroom Risotto", "Pork Dumplings", "Tofu Curry",
     "Shrimp Tempura", "Chicken Tikka", "Vegetable Curry", "Beef Stew", "Fish and Chips",
-    "Pork Chops", "Chicken Wings", "Veggie Burger", "Salmon Teriyaki", "Beef Tacos"
+    "Pork Chops", "Chicken Wings", "Veggie Burger", "Salmon Teriyaki", "Beef Tacos",
+    "Vegetable Stir Fry", "Chicken Caesar Salad", "Pasta Primavera", "Shrimp Scampi", "Stuffed Peppers"
+    , "Egg Fried Rice", "Lemon Chicken", "Spaghetti Bolognese", "Roast Duck", "Mapo Tofu", "Clam Chowder", "Chicken Alfredo", "Eggplant Parmesan", "Lamb Kebabs", "Seafood Paella", "Pumpkin Soup", "Turkey Sandwich", "Quinoa Salad", "BBQ Ribs", "Sushi Rolls", "Pad Thai", "Falafel Wrap", "Greek Salad", "Lasagna", "Chicken Parmesan"
   ];
 
   // 仍复用已持久化的随机菜名，列表来源不变

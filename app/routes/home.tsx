@@ -8,6 +8,7 @@ import {
   type RecipeCardData,
   getUserDishesFromInventory,
 } from "../services/recipeApi";
+import { useInventory } from "../services/inventoryContext"; // 新增：读取库存加载状态
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -19,6 +20,7 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { loaded } = useInventory(); // 新增
   const [llmQuery, setLlmQuery] = useState("");
   const [showLlmModal, setShowLlmModal] = useState(false);
   const [currentRecipeIndex, setCurrentRecipeIndex] = useState(0);
@@ -90,21 +92,17 @@ export default function Home() {
     navigate('/inventory');
   };
 
-  const reloadingRef = useRef(false);        // 防止并发重复加载
-  const lastReloadAtRef = useRef(0);         // 最小间隔控制
-  const MIN_RELOAD_INTERVAL = 1200;          // ms
+  const reloadingRef = useRef(false);
+  const lastReloadAtRef = useRef(0);
+  const MIN_RELOAD_INTERVAL = 1200;
 
-  // 统一重载：按组合键从本地或网络获取推荐/已保存卡片（唯一入口）
   const reloadByComboCache = async () => {
     reloadingRef.current = true;
     try {
       console.groupCollapsed("[Home] reloadByComboCache");
       const dishes = getUserDishesFromInventory();
       console.log("current dishes", dishes);
-
-      // 无论是否已有数据，进入 reload 时都显示加载态（你偏好可见的刷新反馈）
       setRecipesLoading(true);
-
       const [recs, saved] = await Promise.all([
         getRecommendedRecipes([], false),
         getCachedSavedRecipes()
@@ -113,7 +111,6 @@ export default function Home() {
       setSavedRecipes(saved);
       setCurrentRecipeIndex(0);
       setCurrentSavedIndex(0);
-
       console.log("[Home] loaded", { recs: recs.length, saved: saved.length });
     } catch (e) {
       console.error("[Home] reloadByComboCache failed", e);
@@ -125,44 +122,47 @@ export default function Home() {
     }
   };
 
-  // 带最小间隔的触发器
   const requestReload = () => {
+    if (!loaded) {
+      console.log("[Home] inventory not loaded yet, skip reload");
+      return;
+    }
     if (reloadingRef.current) return;
     const now = Date.now();
     if (now - lastReloadAtRef.current < MIN_RELOAD_INTERVAL) return;
     void reloadByComboCache();
   };
 
-  // 单一入口：首屏 + 路由变化 + 窗口焦点/历史返回，均通过 reload（本地命中则不走网）
+  // 首屏 + 路由变化 + 历史返回：仅在 inventory 已加载后才触发 reload（移除 window focus 触发）
   useEffect(() => {
-    if (location.pathname === "/") {
-      console.log("[Home] path change -> requestReload");
+    if (location.pathname === "/" && loaded) {
+      console.log("[Home] path change -> requestReload (inventory loaded)");
       requestReload();
     }
 
-    const onFocus = () => {
-      console.log("[Home] window focus -> requestReload");
-      requestReload();
-    };
     const onPopState = () => {
+      if (!loaded) {
+        console.log("[Home] popstate -> inventory not loaded, skip");
+        return;
+      }
       console.log("[Home] popstate -> requestReload");
       requestReload();
     };
 
-    window.addEventListener("focus", onFocus);
+    // 移除: window.addEventListener("focus", onFocus)
     window.addEventListener("popstate", onPopState);
     return () => {
-      window.removeEventListener("focus", onFocus);
+      // 移除: window.removeEventListener("focus", onFocus)
       window.removeEventListener("popstate", onPopState);
     };
-  }, [location.pathname]);
+  }, [location.pathname, loaded]);
 
-  // 刷新推荐菜谱按钮：直接触发 reload，并显示刷新中的按钮态
+  // 刷新按钮：未 loaded 前禁用；loaded 后忽略最小间隔直接执行
   const handleRefreshRecipes = async () => {
-    if (reloadingRef.current || refreshing) return;
+    if (!loaded || reloadingRef.current || refreshing) return;
     setRefreshing(true);
     try {
-      await reloadByComboCache(); // 忽略最小间隔，用户主动刷新
+      await reloadByComboCache();
     } finally {
       setRefreshing(false);
     }
@@ -424,9 +424,7 @@ export default function Home() {
                   style={{
                     width: '100%',
                     position: 'relative',
-                    paddingTop: '75%', // 4:3，更高不“瘦”
-                    overflow: 'hidden',
-                    borderRadius: '12px'
+                    paddingTop: '75%' // 4:3，更高不“瘦”
                   }}
                 >
                   {recommendations[currentRecipeIndex].imageUrl ? (
@@ -536,9 +534,7 @@ export default function Home() {
                   style={{
                     width: '100%',
                     position: 'relative',
-                    paddingTop: '75%', // 4:3，更高不“瘦”
-                    overflow: 'hidden',
-                    borderRadius: '12px'
+                    paddingTop: '75%' // 4:3，更高不“瘦”
                   }}
                 >
                   {savedRecipes[currentSavedIndex].imageUrl ? (
