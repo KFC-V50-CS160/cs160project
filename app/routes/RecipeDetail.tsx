@@ -138,6 +138,14 @@ function writeHero(key: string, url: string) {
   }
 }
 
+// 全局 in-flight 去重（跨页面/组件复用）
+function getHeroInflightMap(): Map<string, Promise<string | null>> {
+  if (typeof window === "undefined") return new Map();
+  const w = window as any;
+  if (!w.__heroInflight) w.__heroInflight = new Map<string, Promise<string | null>>();
+  return w.__heroInflight as Map<string, Promise<string | null>>;
+}
+
 function useRecipeDetail() {
   // 期望访问路径示例：
   // /recipes/Mapo%20Tofu?prefs=vegetarian&dishes=rice%2Ctofu
@@ -555,14 +563,22 @@ export default function RecipeDetailPage() {
     }
   };
 
-  // 根据 recipeName 生成封面图（带缓存）
+  const effectiveTitle = useMemo(() => {
+    return state.status === "success" && state.data?.title ? state.data.title : "";
+  }, [state]);
+
+  // 根据 recipeName 生成封面图（仅在详情成功且拿到最终 title 后触发，且全局去重）
   useEffect(() => {
     if (!hydrated) return;
-    const recipeName =
-      (state.status === "success" && state.data?.title) || dishName || "";
-    if (!recipeName) return;
+    if (!effectiveTitle) return;
 
+    const recipeName = effectiveTitle;
     const heroKey = makeHeroKey(recipeName);
+    const inflightMap = getHeroInflightMap();
+    let cancelled = false;
+
+    // 切换菜名时，先清空旧图，避免闪图
+    setHeroUrl(null);
 
     // 先尝试缓存
     const cached = readHero(heroKey);
@@ -571,11 +587,16 @@ export default function RecipeDetailPage() {
       return;
     }
 
-    let cancelled = false;
-    const controller = new AbortController();
+    // 复用全局 in-flight
+    const existing = inflightMap.get(recipeName);
+    if (existing) {
+      existing.then((url) => {
+        if (!cancelled && url) setHeroUrl(url);
+      });
+      return;
+    }
 
-    // TODO: 将图片生成 API 放到服务端代理
-    (async () => {
+    const p = (async () => {
       try {
         console.groupCollapsed("[RecipeDetail] hero image fetch");
         console.log("recipeName", recipeName);
@@ -585,12 +606,9 @@ export default function RecipeDetailPage() {
             "Content-Type": "application/json",
             Authorization: "Bearer rg_v1_ae72y97juphr37kmg4spwck0un6qdcdybw6r_ngk"
           },
-          body: JSON.stringify({ recipeName }),
-          signal: controller.signal
+          body: JSON.stringify({ recipeName })
         });
-
         const text = await res.text();
-        // 优先解析 JSON 里的 url 字段；否则尝试用 response.url 或将文本作为 URL
         let url = "";
         try {
           const maybe = JSON.parse(text);
@@ -599,37 +617,41 @@ export default function RecipeDetailPage() {
           // ignore non-JSON
         }
         if (!url) {
-          if (typeof res.url === "string" && res.url.startsWith("http")) {
-            url = res.url;
+          if (typeof (res as any).url === "string" && (res as any).url.startsWith("http")) {
+            url = (res as any).url;
           } else if (typeof text === "string" && /^https?:\/\//i.test(text.trim())) {
             url = text.trim();
           }
         }
-
         if (!url) {
           console.warn("[RecipeDetail] hero image: url not found in response");
-          return;
+          return null;
         }
-        if (!cancelled) {
-          setHeroUrl(url);
-          writeHero(heroKey, url);
-          console.log("[RecipeDetail] hero image url", url);
-        }
+        // 写入页面 hero 缓存
+        writeHero(heroKey, url);
+        return url;
       } catch (e) {
-        if (!cancelled) {
-          console.error("[RecipeDetail] hero image error", e);
-          setHeroUrl(null);
-        }
+        console.error("[RecipeDetail] hero image error", e);
+        return null;
       } finally {
         console.groupEnd();
       }
     })();
 
+    inflightMap.set(recipeName, p);
+
+    p.then((url) => {
+      if (!cancelled && url) setHeroUrl(url);
+    }).finally(() => {
+      // 仅当当前 in-flight 仍是该 Promise 时再删除（防止被后续请求覆盖）
+      const curr = inflightMap.get(recipeName);
+      if (curr === p) inflightMap.delete(recipeName);
+    });
+
     return () => {
       cancelled = true;
-      controller.abort();
     };
-  }, [hydrated, state, dishName]);
+  }, [hydrated, effectiveTitle]);
 
   const handleStartCooking = () => {
     if (state.status === "success" && state.data) {
@@ -713,4 +735,5 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
+
 
