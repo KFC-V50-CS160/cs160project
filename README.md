@@ -31,7 +31,7 @@ External lightweight APIs (recipe / image / chat)
 
 ```bash
 npm install
-npm run dev         # SSR + HMR
+npm run dev
 ```
 
 Visit: http://localhost:5173
