@@ -103,18 +103,6 @@ Lazy hero request per missing image, serialized to limit noise, cached by recipe
 
 ---
 
-## Security Notes (Condensed)
-
-| Current Demo | Recommended Production |
-|--------------|------------------------|
-| Front-end embedded external tokens | Move behind server proxy + rate limit |
-| Unlimited local cache growth | Add TTL / LRU eviction |
-| No auth | Introduce accounts for multi-user separation |
-| No error monitoring | Add Sentry / logging pipeline |
-| External API dependency | Provide graceful fallbacks |
-
----
-
 
 
 Happy Cooking! 🍽
